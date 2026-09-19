@@ -27,8 +27,8 @@ OpenStreetMap            SUMO                         CARLA
 
 完整影片放在 GitHub `simulation-v1` Release，不寫入 Git 歷史：
 
-- [真實道路參考影片](../../releases/download/simulation-v1/real-road-reference.mp4)
-- [CARLA 模擬影片](../../releases/download/simulation-v1/carla-road-simulation.mp4)
+- [真實道路參考影片](../../../releases/download/simulation-v1/real-road-reference.mp4)
+- [CARLA 模擬影片](../../../releases/download/simulation-v1/carla-road-simulation.mp4)
 
 ## 資料使用原則與限制
 
