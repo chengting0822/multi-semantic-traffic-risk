@@ -13,7 +13,7 @@ tl_state, tl_prob_green, tl_prob_red
 
 道路 ROI、車道、停止線與 IPM 設定置於 `configs/`。
 
-## 2. 單車 GRU 輸入
+## 2. 單一車輛 GRU 輸入
 
 每列是一個車輛時間窗，必須有：
 
@@ -25,7 +25,7 @@ case_key, video_id, track_id, ts_window_idx
 
 `pred_gru_raw` 是純 GRU argmax；`pred_v37e` 加上正式軌跡級抑噪與超速語意 rescue；論文最終結果還需要後續交通語意規則鏈，不能把其中任一中間欄位冒充最終 pipeline 結果。
 
-## 3. 單車規則鏈輸入
+## 3. 單一車輛規則鏈輸入
 
 `apply-single-policies` 以 window table 加上下列 prepared sidecars 執行：
 

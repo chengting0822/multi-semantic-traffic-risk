@@ -22,7 +22,7 @@
 ## 檔案
 
 - `scene_features.npz`：186 個場景時間窗的模型 tensor。
-- `scene_windows.csv`：場景層統計與單車風險下限。
+- `scene_windows.csv`：場景層統計與單一車輛風險下限。
 - `scene_tokens.csv`：848 筆車輛 token 與語意來源。
 - `interaction_features.csv`：車對車距離、CPA、TTC 與品質特徵。
 - `expected_scene_risk.csv`：原始正式 pipeline 的選定 Hybrid 輸出，僅用於驗證。

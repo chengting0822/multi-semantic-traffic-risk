@@ -6,14 +6,14 @@
 
 | 元件 | 比對資料量 | 結果 |
 |---|---:|---|
-| 單車 causal GRU + 正式 track postprocess，validation | 13,892 windows | raw/final 類別差異皆 0；機率最大絕對差約 3.99e-6 |
-| 單車 causal GRU + 正式 track postprocess，test | 12,384 windows | raw/final 類別差異皆 0；機率最大絕對差約 2.68e-6 |
-| 單車完整語意規則鏈 | 26,276 windows | current risk 差異 0；final cumulative risk 差異 0 |
+| 單一車輛 causal GRU + 正式 track postprocess，validation | 13,892 windows | raw/final 類別差異皆 0；機率最大絕對差約 3.99e-6 |
+| 單一車輛 causal GRU + 正式 track postprocess，test | 12,384 windows | raw/final 類別差異皆 0；機率最大絕對差約 2.68e-6 |
+| 單一車輛完整語意規則鏈 | 26,276 windows | current risk 差異 0；final cumulative risk 差異 0 |
 | 場景神經模型 | 16,446 scene windows | 四組預測類別差異皆 0；機率最大絕對差約 4.77e-7 |
 | 場景 hybrid 融合 | 16,446 scene windows、176 欄 | 所有 prediction/reason 欄一致；正式選定輸出差異 0 |
 | `predict-scene` 公開 CLI | 16,446 scene windows | 讀檔、模型、hybrid 與寫檔完整執行；`risk_level` 差異 0 |
 
-單車最終風險分布亦一致：risk 0 = 24,646、risk 1 = 709、risk 2 = 921。
+單一車輛最終風險分布亦一致：risk 0 = 24,646、risk 1 = 709、risk 2 = 921。
 
 ## 重跑驗證
 

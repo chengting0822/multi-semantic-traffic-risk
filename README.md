@@ -61,7 +61,7 @@ case04 video=115 peak=3 (高風險)
 1. **影像感知**：使用 YOLO 偵測車輛、ByteTrack 建立軌跡，再以固定號誌 ROI 上的輕量 CNN 辨識紅／綠燈。
 2. **道路幾何**：標定有效 ROI、車道範圍與方向、虛擬停止線，並使用 IPM 將影像座標投影到世界座標。
 3. **多語意行為**：將速度、號誌、停止線、車道方向與軌跡轉換為超速、闖紅燈與異常軌跡語意。
-4. **單車風險**：將 16 維語意時間序列輸入 Causal GRU，再結合可解釋政策與累積式輸出。
+4. **單一車輛風險**：將 16 維語意時間序列輸入 Causal GRU，再結合可解釋政策與累積式輸出。
 5. **場景風險**：聚合最多 16 台車輛、場景統計及 CPA/TTC 互動特徵，輸出整體交通風險。
 
 完整流程、車道標定圖、虛擬停止線與互動特徵請見 [研究方法](docs/methodology.md)；網路維度與融合方式請見 [模型架構](docs/models.md)。
@@ -80,12 +80,12 @@ case04 video=115 peak=3 (高風險)
 
 | 評估項目 | 結果 |
 |---|---:|
-| 單車風險，video-level 5-fold，window Macro F1 | 0.8894 ± 0.0084 |
-| 單車風險，video-level 5-fold，track Macro F1 | 0.9227 ± 0.0417 |
+| 單一車輛風險，video-level 5-fold，window Macro F1 | 0.8894 ± 0.0084 |
+| 單一車輛風險，video-level 5-fold，track Macro F1 | 0.9227 ± 0.0417 |
 | 場景風險，固定 test，severity Macro F1 | 0.9339 |
 | 場景風險，固定 test，無／中／高風險 F1 | 0.9812 / 0.8674 / 0.9531 |
 
-整理版鎖定正式 checkpoint 與程式後，對原始正式輸出逐列驗證。單車模型、單車政策鏈、場景模型與 Hybrid 融合的離散輸出皆為 **0 筆差異**。詳見 [等價驗證](docs/parity.md)。
+整理版鎖定正式 checkpoint 與程式後，對原始正式輸出逐列驗證。單一車輛模型、單一車輛政策鏈、場景模型與 Hybrid 融合的離散輸出皆為 **0 筆差異**。詳見 [等價驗證](docs/parity.md)。
 
 ## 車輛偵測與追蹤
 
@@ -123,7 +123,7 @@ YOLO 權重與 TensorRT engine 因體積及環境差異不納入 repository；�
 | [研究動機](docs/motivation.md) | 問題背景、研究缺口與設計目標 |
 | [模擬資料](docs/simulation.md) | OSM → SUMO → CARLA 與人工高風險操控 |
 | [研究方法](docs/methodology.md) | 道路幾何、車道、停止線、CNN 與多語意分析 |
-| [模型架構](docs/models.md) | 單車 GRU、場景 Token Pooling 與融合維度 |
+| [模型架構](docs/models.md) | 單一車輛 GRU、場景 Token Pooling 與融合維度 |
 | [偵測與追蹤](docs/detection.md) | YOLO、ByteTrack、GPU 參數與 CSV 輸出 |
 | [Demo 指南](docs/demo.md) | 原始／結果影片與內建可執行範例 |
 | [資料介面](docs/data.md) | CSV、sidecar、NPZ 與輸出欄位 |
@@ -136,7 +136,7 @@ YOLO 權重與 TensorRT engine 因體積及環境差異不納入 repository；�
 ```text
 configs/                  道路幾何、追蹤器與凍結門檻
 models/                   正式 checkpoint 與 SHA-256 manifest
-src/traffic_risk/         偵測、單車風險與場景風險核心
+src/traffic_risk/         偵測、單一車輛風險與場景風險核心
 examples/demo/            四個真實案例的小型可執行資料
 assets/                   架構圖、方法圖、縮圖與獲獎證明
 docs/                     研究與工程文件
