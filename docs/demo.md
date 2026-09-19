@@ -6,7 +6,7 @@
 
 | Case | 來源影片 | 主要情境 | Release 結果影片 |
 |---:|---:|---|---|
-| 1 | 14.mp4 | 停等後逆向闖紅燈 | `case01-wrong-way-red-light-violation.mp4` |
+| 1 | 14.mp4 | 停等紅燈後逆向行駛並闖紅燈 | `case01-wrong-way-red-light-violation.mp4` |
 | 2 | 76.mp4 | 高車流情境下蛇行穿梭 | `case02-weaving-dense-traffic.mp4` |
 | 3 | 96.mp4 | 逆向行駛且嚴重超速 | `case03-severe-speeding-wrong-way.mp4` |
 | 4 | 115.mp4 | 逆向、超速與闖紅燈的複合違規 | `case04-red-light-wrong-way-combined.mp4` |

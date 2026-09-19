@@ -46,7 +46,7 @@ case04 video=115 peak=3 (高風險)
 
 每個案例都提供「原始影片」與「系統結果」，影片放在 GitHub `demo-v1` Release，避免將大型 MP4 寫入 Git 歷史。
 
-| Case 1：停等後逆向闖紅燈 | Case 2：高車流情境下蛇行穿梭 |
+| Case 1：停等紅燈後逆向行駛並闖紅燈 | Case 2：高車流情境下蛇行穿梭 |
 |---|---|
 | [![Case 1](assets/demo-thumbnails/case01.jpg)](../../releases/download/demo-v1/case01-wrong-way-red-light-violation.mp4) | [![Case 2](assets/demo-thumbnails/case02.jpg)](../../releases/download/demo-v1/case02-weaving-dense-traffic.mp4) |
 | [原始 14.mp4](../../releases/download/demo-v1/14.mp4) · [結果影片](../../releases/download/demo-v1/case01-wrong-way-red-light-violation.mp4) | [原始 76.mp4](../../releases/download/demo-v1/76.mp4) · [結果影片](../../releases/download/demo-v1/case02-weaving-dense-traffic.mp4) |
