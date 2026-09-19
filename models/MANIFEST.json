@@ -1,0 +1,28 @@
+{
+  "schema_version": "traffic-risk-model-manifest/v1",
+  "models": {
+    "single_vehicle_gru.pt": {
+      "bytes": 71777,
+      "sha256": "aa5288861ab06707b1ed6d90f013f7ba3cd2ad4efbbef992ce5867feb14955b7",
+      "purpose": "Frozen causal GRU checkpoint used by the paper evaluation"
+    },
+    "single_vehicle_normalization.json": {
+      "bytes": 2689,
+      "sha256": "bd3794627768dc55d309dc7989219fc350153802c5658ef0d14fbfd64c5dd32b",
+      "purpose": "Training-split normalization for the 16 semantic features"
+    },
+    "scene_risk.pt": {
+      "bytes": 1042209,
+      "sha256": "09802cfaf6d5dae76bc68c0235e46d9765d1d84f79cc013944273139c46cc142",
+      "purpose": "Validation-selected scene-risk checkpoint used by the paper evaluation"
+    },
+    "traffic_light_classifier.pt": {
+      "bytes": 98417,
+      "sha256": "f7d61adfb391244aa0f87fc54a3afd552976d10efa3cf7fabd46c97656d604b4",
+      "purpose": "Traffic-light state classifier used by the video front end"
+    }
+  },
+  "excluded": {
+    "vehicle_detector": "Not bundled because the YOLO checkpoint or TensorRT engine is large and environment-specific."
+  }
+}
