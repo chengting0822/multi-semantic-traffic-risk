@@ -1,28 +1,80 @@
 # Multi-Semantic Traffic Risk Assessment
 
-以固定道路監視影像為輸入，整合車輛偵測與追蹤、道路幾何、超速、闖紅燈、異常軌跡、單車時間序列與多車互動，輸出「無／中／高」三級交通風險。
+![Ubuntu 22.04](https://img.shields.io/badge/Ubuntu-22.04-E95420?logo=ubuntu&logoColor=white)
+![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
+![PyTorch](https://img.shields.io/badge/PyTorch-Inference-EE4C2C?logo=pytorch&logoColor=white)
+![Status](https://img.shields.io/badge/status-pre--release-orange)
 
-這個 repository 是從研究原始工作目錄抽出的精簡作品集版本。它只保留論文使用的模型、推論核心、必要設定與可重跑的等價驗證；歷史實驗、快取、重複輸出與大型資料集不納入。
+一個以固定式道路影像為輸入的多語意交通風險評估框架，整合車輛追蹤、道路幾何、超速、闖紅燈、異常軌跡與車對車互動，輸出無／中／高三級交通風險。
 
-精簡版將偵測追蹤、單車風險與場景風險分成可獨立執行的介面，並以明確的 CSV/NPZ 資料契約衔接，不需要原始工作目錄的絕對路徑。
+**[執行 Demo](#快速開始)** · **[觀看影片](#展示案例)** · **[研究方法](docs/methodology.md)** · **[模擬資料](docs/simulation.md)** · **[論文](docs/publications/paper.pdf)**
 
-## 方法概觀
+<p align="center">
+  <img src="assets/architecture/system-overview.svg" alt="System architecture" width="100%">
+</p>
 
-```mermaid
-flowchart LR
-    A[道路影像] --> B[車輛偵測與追蹤]
-    B --> C[道路幾何與交通語意]
-    C --> D[單一車輛風險<br/>16 維特徵 + Causal GRU]
-    D --> E[多車特徵聚合]
-    C --> F[場景與車對車互動]
-    E --> G[場景風險融合]
-    F --> G
-    G --> H[無風險 / 中風險 / 高風險]
+## 為什麼要做這個系統？
+
+單一違規偵測難以表示完整交通風險。車輛可能先出現逆向或蛇行，接著同時發生超速、闖紅燈，或與其他車輛形成碰撞趨勢。因此，本研究不只辨識單一事件，而是結合車輛行為、道路語意與多車互動，判斷整體場景是否需要提高警示。
+
+更完整的問題定義與設計目標請見 [研究動機](docs/motivation.md)。
+
+## 快速開始
+
+建議在 Ubuntu 22.04 與 Python 3.10 環境執行：
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -e '.[detection]'
+./scripts/run_demo.sh --device cpu
 ```
 
-- 單車層：以 16 維交通語意時間序列描述軌跡、速度、號誌與時間狀態，再以 causal GRU 和可解釋規則得到車輛風險。
-- 場景層：每個時間窗最多保留 16 台車的 14 維 token，經編碼與 Max/Mean Pooling 後，和 59 維場景及互動特徵融合。
-- 警示層：整合單車風險下限、模型機率與車對車互動，輸出三級場景風險。
+內建 Demo 會真正執行凍結場景模型與正式 Hybrid 融合，並將輸出與論文正式結果逐列比對：
+
+```text
+verified_rows=183 mismatches=0
+case01 video=14  peak=3 (高風險)
+case02 video=76  peak=3 (高風險)
+case03 video=96  peak=3 (高風險)
+case04 video=115 peak=3 (高風險)
+```
+
+預設輸出為 `outputs/demo_scene_risk.csv`。範例使用從正式資料擷取的 186 個場景時間窗與 848 筆車輛 token，不是隨機產生的假資料。
+
+## 展示案例
+
+每個案例都提供「原始影片」與「系統結果」，影片放在 GitHub `demo-v1` Release，避免將大型 MP4 寫入 Git 歷史。
+
+| Case 1：等待後逆向闖紅燈 | Case 2：壅塞車流蛇行 |
+|---|---|
+| [![Case 1](assets/demo-thumbnails/case01.jpg)](../../releases/download/demo-v1/case01-wrong-way-red-light-violation.mp4) | [![Case 2](assets/demo-thumbnails/case02.jpg)](../../releases/download/demo-v1/case02-weaving-dense-traffic.mp4) |
+| [原始 14.mp4](../../releases/download/demo-v1/14.mp4) · [結果影片](../../releases/download/demo-v1/case01-wrong-way-red-light-violation.mp4) | [原始 76.mp4](../../releases/download/demo-v1/76.mp4) · [結果影片](../../releases/download/demo-v1/case02-weaving-dense-traffic.mp4) |
+| Case 3：嚴重超速與逆向 | Case 4：闖紅燈與逆向複合事件 |
+| [![Case 3](assets/demo-thumbnails/case03.jpg)](../../releases/download/demo-v1/case03-severe-speeding-wrong-way.mp4) | [![Case 4](assets/demo-thumbnails/case04.jpg)](../../releases/download/demo-v1/case04-red-light-wrong-way-combined.mp4) |
+| [原始 96.mp4](../../releases/download/demo-v1/96.mp4) · [結果影片](../../releases/download/demo-v1/case03-severe-speeding-wrong-way.mp4) | [原始 115.mp4](../../releases/download/demo-v1/115.mp4) · [結果影片](../../releases/download/demo-v1/case04-red-light-wrong-way-combined.mp4) |
+
+案例說明、影片雜湊與可執行資料請見 [Demo 文件](docs/demo.md)。
+
+## 方法重點
+
+1. **影像感知**：使用 YOLO 偵測車輛、ByteTrack 建立軌跡，再以固定號誌 ROI 上的輕量 CNN 辨識紅／綠燈。
+2. **道路幾何**：標定有效 ROI、車道範圍與方向、虛擬停止線，並使用 IPM 將影像座標投影到世界座標。
+3. **多語意行為**：將速度、號誌、停止線、車道方向與軌跡轉換為超速、闖紅燈與異常軌跡語意。
+4. **單車風險**：將 16 維語意時間序列輸入 Causal GRU，再結合可解釋政策與累積式輸出。
+5. **場景風險**：聚合最多 16 台車輛、場景統計及 CPA/TTC 互動特徵，輸出整體交通風險。
+
+完整流程、車道標定圖、虛擬停止線與互動特徵請見 [研究方法](docs/methodology.md)；網路維度與融合方式請見 [模型架構](docs/models.md)。
+
+## 模擬資料：OpenStreetMap → SUMO → CARLA
+
+研究在 Ubuntu 22.04 環境下，以 OpenStreetMap 建立道路幾何，透過 SUMO 產生背景交通流，再匯入 CARLA 建立視覺場景。高風險車輛使用 CARLA 內建鍵盤駕駛功能由研究人員操控，用來建立自動交通流不易自然產生的逆向、蛇行、超速、闖紅燈與複合行為。
+
+| 真實道路參考 | CARLA 模擬影像 |
+|---|---|
+| [![Real road](assets/simulation/real-road-reference.jpg)](../../releases/download/simulation-v1/real-road-reference.mp4) | [![CARLA simulation](assets/simulation/carla-road-simulation.jpg)](../../releases/download/simulation-v1/carla-road-simulation.mp4) |
+
+模擬流程、人工操控原則與資料限制請見 [模擬資料說明](docs/simulation.md)。
 
 ## 論文結果
 
@@ -33,113 +85,80 @@ flowchart LR
 | 場景風險，固定 test，severity Macro F1 | 0.9339 |
 | 場景風險，固定 test，無／中／高風險 F1 | 0.9812 / 0.8674 / 0.9531 |
 
-完整論文與簡報可見 [paper.pdf](docs/publications/paper.pdf) 與 [cvgip-presentation.pdf](docs/publications/cvgip-presentation.pdf)。
+整理版鎖定正式 checkpoint 與程式後，對原始正式輸出逐列驗證。單車模型、單車政策鏈、場景模型與 Hybrid 融合的離散輸出皆為 **0 筆差異**。詳見 [等價驗證](docs/parity.md)。
 
-## 示範影片
+## 車輛偵測與追蹤
 
-每個案例同時提供原始 MP4 與結果 MP4。八部影片預計放在 GitHub Release，避免把約 300 MB 影片永久寫進 Git 歷史。
+新手可用論文期間的預設參數執行：
 
-| Case 1：等待後逆向闖紅燈 | Case 2：壅塞車流蛇行 |
+```bash
+./scripts/run_detection.sh input.mp4 /path/to/yolo26x.pt outputs/tracks.csv
+```
+
+YOLO 權重與 TensorRT engine 因體積及環境差異不納入 repository；號誌 CNN、ByteTrack 設定與道路 ROI 則已附上。
+
+<details>
+<summary><strong>展開：完整偵測參數與舊版 yolotest.py 指令</strong></summary>
+
+完整指令、參數表與舊新介面對照放在 [偵測與追蹤文件](docs/detection.md)。
+
+</details>
+
+## 開發環境
+
+| 項目 | 環境／工具 |
 |---|---|
-| [![Wrong-way red-light violation](assets/demo-thumbnails/case01.jpg)](https://github.com/chengting0822/multi-semantic-traffic-risk/releases/download/demo-v1/case01-wrong-way-red-light-violation.mp4) | [![Weaving through dense traffic](assets/demo-thumbnails/case02.jpg)](https://github.com/chengting0822/multi-semantic-traffic-risk/releases/download/demo-v1/case02-weaving-dense-traffic.mp4) |
-| [原始影片 14.mp4](https://github.com/chengting0822/multi-semantic-traffic-risk/releases/download/demo-v1/14.mp4) · [結果影片](https://github.com/chengting0822/multi-semantic-traffic-risk/releases/download/demo-v1/case01-wrong-way-red-light-violation.mp4) | [原始影片 76.mp4](https://github.com/chengting0822/multi-semantic-traffic-risk/releases/download/demo-v1/76.mp4) · [結果影片](https://github.com/chengting0822/multi-semantic-traffic-risk/releases/download/demo-v1/case02-weaving-dense-traffic.mp4) |
-| Case 3：嚴重超速與逆向 | Case 4：闖紅燈與逆向複合事件 |
-| [![Severe speeding with wrong-way driving](assets/demo-thumbnails/case03.jpg)](https://github.com/chengting0822/multi-semantic-traffic-risk/releases/download/demo-v1/case03-severe-speeding-wrong-way.mp4) | [![Combined red-light and wrong-way violation](assets/demo-thumbnails/case04.jpg)](https://github.com/chengting0822/multi-semantic-traffic-risk/releases/download/demo-v1/case04-red-light-wrong-way-combined.mp4) |
-| [原始影片 96.mp4](https://github.com/chengting0822/multi-semantic-traffic-risk/releases/download/demo-v1/96.mp4) · [結果影片](https://github.com/chengting0822/multi-semantic-traffic-risk/releases/download/demo-v1/case03-severe-speeding-wrong-way.mp4) | [原始影片 115.mp4](https://github.com/chengting0822/multi-semantic-traffic-risk/releases/download/demo-v1/115.mp4) · [結果影片](https://github.com/chengting0822/multi-semantic-traffic-risk/releases/download/demo-v1/case04-red-light-wrong-way-combined.mp4) |
+| 作業系統 | Ubuntu 22.04 LTS |
+| 程式語言 | Python 3.10+ |
+| 深度學習 | PyTorch |
+| 影像處理 | OpenCV、Ultralytics YOLO |
+| 多目標追蹤 | ByteTrack |
+| 模擬環境 | OpenStreetMap、SUMO、CARLA |
+| 運算 | NVIDIA GPU；內建風險 Demo 也可用 CPU |
 
-## 安裝
+## 技術文件
 
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -e '.[detection]'
-traffic-risk doctor
-```
+| 文件 | 內容 |
+|---|---|
+| [研究動機](docs/motivation.md) | 問題背景、研究缺口與設計目標 |
+| [模擬資料](docs/simulation.md) | OSM → SUMO → CARLA 與人工高風險操控 |
+| [研究方法](docs/methodology.md) | 道路幾何、車道、停止線、CNN 與多語意分析 |
+| [模型架構](docs/models.md) | 單車 GRU、場景 Token Pooling 與融合維度 |
+| [偵測與追蹤](docs/detection.md) | YOLO、ByteTrack、GPU 參數與 CSV 輸出 |
+| [Demo 指南](docs/demo.md) | 原始／結果影片與內建可執行範例 |
+| [資料介面](docs/data.md) | CSV、sidecar、NPZ 與輸出欄位 |
+| [等價驗證](docs/parity.md) | 與論文正式輸出的逐列比對 |
+| [版本來源](docs/provenance.md) | 正式模型來源與排除的歷史實驗 |
 
-PyTorch 的 CUDA 版本應依顯示卡與驅動環境安裝。YOLO 權重與 TensorRT engine 沒有放進 repository，需由使用者另行指定。
-
-## 可執行範例
-
-Repository 內附有四個案例的真實 prepared features，可直接重跑場景模型與正式 Hybrid 融合：
-
-```bash
-./scripts/run_demo.sh --device cpu
-```
-
-預設輸出為 `outputs/demo_scene_risk.csv`。程式會同時比對 183 個正式時間窗；應顯示 `mismatches=0`。範例資料說明請見 [examples/demo/README.md](examples/demo/README.md)。
-
-## 使用方式
-
-車輛偵測與追蹤：
-
-```bash
-traffic-risk detect -- input.mp4 \
-  --output outputs/tracks.csv \
-  --yolo-model /path/to/yolo-model.pt
-```
-
-對已準備好的 16 維單車特徵執行凍結 GRU：
-
-```bash
-traffic-risk predict-single data/single_vehicle_features.csv outputs/single_gru.csv
-```
-
-對已準備好的場景 tensor 執行凍結場景模型：
-
-```bash
-traffic-risk predict-scene-model data/scene_features.npz outputs/scene_model.csv --all-rows
-```
-
-執行場景模型與論文選定的 hybrid 融合，輸出最終 `risk_level`：
-
-```bash
-traffic-risk predict-scene \
-  data/scene_features.npz \
-  data/scene_windows.csv \
-  data/scene_tokens.csv \
-  data/interaction_features.csv \
-  outputs/scene_risk.csv
-```
-
-最終單車規則鏈需要語意 sidecar；欄位與介面請見 [docs/data.md](docs/data.md)。研究等價性與正式來源請見 [docs/parity.md](docs/parity.md) 與 [docs/provenance.md](docs/provenance.md)。
-
-若本機仍保留原始研究資料，可重跑四段逐列等價驗證：
-
-```bash
-python scripts/verify_original_parity.py \
-  --original-root /path/to/original-project \
-  --check all
-```
-
-## Repository 結構
+<details>
+<summary><strong>展開：Repository 結構與資料政策</strong></summary>
 
 ```text
 configs/                  道路幾何、追蹤器與凍結門檻
-models/                   小型正式 checkpoint 與 SHA-256 manifest
-src/traffic_risk/
-  detection/              YOLO + ByteTrack + 號誌辨識
-  single_vehicle/         causal GRU、語意規則與最終累積風險
-  scene/                  多車 pooling、互動特徵與場景融合
-assets/                   README 預覽圖與獲獎證明
-examples/demo/             四個真實案例的小型可執行資料
-docs/                     資料介面、來源、等價驗證、論文與簡報
-tests/                    資產與設定 smoke tests
-scripts/                  原始正式輸出的逐列等價驗證
+models/                   正式 checkpoint 與 SHA-256 manifest
+src/traffic_risk/         偵測、單車風險與場景風險核心
+examples/demo/            四個真實案例的小型可執行資料
+assets/                   架構圖、方法圖、縮圖與獲獎證明
+docs/                     研究與工程文件
+scripts/                  Demo、偵測 preset 與等價驗證
+tests/                    資產、設定與四案例推論測試
 ```
 
-## 資料集說明
+訓練影片、逐幀軌跡、人工標註、快取與大型中間輸出不納入 GitHub，原因包含容量、影像授權與隱私風險。Repository 提供資料契約、小型真實範例、正式權重與可驗證結果。
 
-訓練影片、逐幀軌跡、人工標註、快取和中間輸出不放入 GitHub。原因是容量、影像授權與隱私風險；這些資料也不是執行凍結模型的必要 repository 內容。公開版本提供資料欄位契約與模型權重，而不是宣稱包含可再現訓練的完整私有資料集。
+</details>
 
 ## 團隊與貢獻
 
-- 蔡承廷：專題規劃、系統與研究方法設計、約 90% 程式實作、模型實驗、整合與展示。
-- 林武杰老師：專題指導與研究方向建議。
-- 劉康申、謝宏喆：資料處理、模擬資料產生與研究意見。
+- **蔡承廷**：專題規劃與核心系統開發，負責影像處理流程、道路幾何與交通語意建模、風險模型實驗、系統整合及成果展示。
+- **林武杰老師**：專題指導、研究方向與實驗設計建議。
+- **劉康申、謝宏喆**：協助資料處理、模擬資料建立及研究討論。
 
-## 獲獎
+## 論文與獲獎
 
-- CVGIP 相關證明：[certificate](assets/awards/cvgip-certificate.jpg)
-- 校內專題競賽第三名：[certificate](assets/awards/university-project-third-place.jpg)
+- [論文全文](docs/publications/paper.pdf)
+- [CVGIP 正式簡報](docs/publications/cvgip-presentation.pdf)
+- [CVGIP 2026 論文發表證明](assets/awards/cvgip-certificate.jpg)
+- [國立虎尾科技大學資訊工程系專題競賽第三名](assets/awards/university-project-third-place.jpg)
 
-> 此 repository 目前是上傳前的精簡整理版；尚未推送至 GitHub。授權條款會在正式公開前確認。
+> 這是上傳前的 pre-release 作品集版本；介面與文件仍可能調整。
