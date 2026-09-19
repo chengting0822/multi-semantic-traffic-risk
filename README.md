@@ -46,11 +46,11 @@ case04 video=115 peak=3 (高風險)
 
 每個案例都提供「原始影片」與「系統結果」，影片放在 GitHub `demo-v1` Release，避免將大型 MP4 寫入 Git 歷史。
 
-| Case 1：等待後逆向闖紅燈 | Case 2：壅塞車流蛇行 |
+| Case 1：停等後逆向闖紅燈 | Case 2：高車流情境下蛇行穿梭 |
 |---|---|
 | [![Case 1](assets/demo-thumbnails/case01.jpg)](../../releases/download/demo-v1/case01-wrong-way-red-light-violation.mp4) | [![Case 2](assets/demo-thumbnails/case02.jpg)](../../releases/download/demo-v1/case02-weaving-dense-traffic.mp4) |
 | [原始 14.mp4](../../releases/download/demo-v1/14.mp4) · [結果影片](../../releases/download/demo-v1/case01-wrong-way-red-light-violation.mp4) | [原始 76.mp4](../../releases/download/demo-v1/76.mp4) · [結果影片](../../releases/download/demo-v1/case02-weaving-dense-traffic.mp4) |
-| Case 3：嚴重超速與逆向 | Case 4：闖紅燈與逆向複合事件 |
+| Case 3：逆向行駛且嚴重超速 | Case 4：逆向、超速與闖紅燈的複合違規 |
 | [![Case 3](assets/demo-thumbnails/case03.jpg)](../../releases/download/demo-v1/case03-severe-speeding-wrong-way.mp4) | [![Case 4](assets/demo-thumbnails/case04.jpg)](../../releases/download/demo-v1/case04-red-light-wrong-way-combined.mp4) |
 | [原始 96.mp4](../../releases/download/demo-v1/96.mp4) · [結果影片](../../releases/download/demo-v1/case03-severe-speeding-wrong-way.mp4) | [原始 115.mp4](../../releases/download/demo-v1/115.mp4) · [結果影片](../../releases/download/demo-v1/case04-red-light-wrong-way-combined.mp4) |
 
