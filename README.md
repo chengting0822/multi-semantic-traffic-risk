@@ -44,15 +44,15 @@ case04 video=115 peak=3 (高風險)
 
 ## 展示案例
 
-每個案例都提供「原始影片」與「系統結果」，影片放在 GitHub `demo-v1` Release，避免將大型 MP4 寫入 Git 歷史。
+點擊縮圖可直接在 YouTube 觀看；原始影片與結果影片也保留在 GitHub `demo-v1` Release，方便下載與備份。
 
 | Case 1：停等紅燈後逆向行駛並闖紅燈 | Case 2：高車流情境下蛇行穿梭 |
 |---|---|
-| [![Case 1](assets/demo-thumbnails/case01.jpg)](../../releases/download/demo-v1/case01-wrong-way-red-light-violation.mp4) | [![Case 2](assets/demo-thumbnails/case02.jpg)](../../releases/download/demo-v1/case02-weaving-dense-traffic.mp4) |
-| [原始 14.mp4](../../releases/download/demo-v1/14.mp4) · [結果影片](../../releases/download/demo-v1/case01-wrong-way-red-light-violation.mp4) | [原始 76.mp4](../../releases/download/demo-v1/76.mp4) · [結果影片](../../releases/download/demo-v1/case02-weaving-dense-traffic.mp4) |
+| [![Case 1](assets/demo-thumbnails/case01.jpg)](https://youtu.be/NUPHokZSsbk) | [![Case 2](assets/demo-thumbnails/case02.jpg)](https://youtu.be/SLkpqrQS3C8) |
+| [▶ YouTube](https://youtu.be/NUPHokZSsbk) · [原始 14.mp4](../../releases/download/demo-v1/14.mp4) · [結果影片](../../releases/download/demo-v1/case01-wrong-way-red-light-violation.mp4) | [▶ YouTube](https://youtu.be/SLkpqrQS3C8) · [原始 76.mp4](../../releases/download/demo-v1/76.mp4) · [結果影片](../../releases/download/demo-v1/case02-weaving-dense-traffic.mp4) |
 | Case 3：逆向行駛且嚴重超速 | Case 4：逆向、超速與闖紅燈的複合違規 |
-| [![Case 3](assets/demo-thumbnails/case03.jpg)](../../releases/download/demo-v1/case03-severe-speeding-wrong-way.mp4) | [![Case 4](assets/demo-thumbnails/case04.jpg)](../../releases/download/demo-v1/case04-red-light-wrong-way-combined.mp4) |
-| [原始 96.mp4](../../releases/download/demo-v1/96.mp4) · [結果影片](../../releases/download/demo-v1/case03-severe-speeding-wrong-way.mp4) | [原始 115.mp4](../../releases/download/demo-v1/115.mp4) · [結果影片](../../releases/download/demo-v1/case04-red-light-wrong-way-combined.mp4) |
+| [![Case 3](assets/demo-thumbnails/case03.jpg)](https://youtu.be/vVxrHDQVQmU) | [![Case 4](assets/demo-thumbnails/case04.jpg)](https://youtu.be/iLS613jvpMI) |
+| [▶ YouTube](https://youtu.be/vVxrHDQVQmU) · [原始 96.mp4](../../releases/download/demo-v1/96.mp4) · [結果影片](../../releases/download/demo-v1/case03-severe-speeding-wrong-way.mp4) | [▶ YouTube](https://youtu.be/iLS613jvpMI) · [原始 115.mp4](../../releases/download/demo-v1/115.mp4) · [結果影片](../../releases/download/demo-v1/case04-red-light-wrong-way-combined.mp4) |
 
 案例說明、影片雜湊與可執行資料請見 [Demo 文件](docs/demo.md)。
 

@@ -6,6 +6,7 @@
       "case": 1,
       "video_id": "14",
       "title_zh": "停等紅燈後逆向行駛並闖紅燈",
+      "youtube_url": "https://youtu.be/NUPHokZSsbk",
       "raw_asset": {
         "filename": "14.mp4",
         "bytes": 76310987,
@@ -21,6 +22,7 @@
       "case": 2,
       "video_id": "76",
       "title_zh": "高車流情境下蛇行穿梭",
+      "youtube_url": "https://youtu.be/SLkpqrQS3C8",
       "raw_asset": {
         "filename": "76.mp4",
         "bytes": 68628799,
@@ -36,6 +38,7 @@
       "case": 3,
       "video_id": "96",
       "title_zh": "逆向行駛且嚴重超速",
+      "youtube_url": "https://youtu.be/vVxrHDQVQmU",
       "raw_asset": {
         "filename": "96.mp4",
         "bytes": 49086914,
@@ -51,6 +54,7 @@
       "case": 4,
       "video_id": "115",
       "title_zh": "逆向、超速與闖紅燈的複合違規",
+      "youtube_url": "https://youtu.be/iLS613jvpMI",
       "raw_asset": {
         "filename": "115.mp4",
         "bytes": 43395531,
