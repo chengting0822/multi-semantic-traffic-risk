@@ -40,7 +40,15 @@ case03 video=96  peak=3 (高風險)
 case04 video=115 peak=3 (高風險)
 ```
 
-預設輸出為 `outputs/demo_scene_risk.csv`。範例使用從正式資料擷取的 186 個場景時間窗與 848 筆車輛 token，不是隨機產生的假資料。
+預設輸出為 `outputs/demo_scene_risk.csv`。範例使用從正式資料擷取的 183 個場景時間窗，不是隨機產生的假資料。
+
+下載四支原始示範影片（影片放在 Release，不增加 Git repository 體積）：
+
+```bash
+python scripts/download_demo_videos.py
+```
+
+下載後會得到 `data/demo_videos/{14,76,96,115}.mp4`，並以 SHA-256 驗證檔案。
 
 ## 展示案例
 
@@ -97,6 +105,31 @@ case04 video=115 peak=3 (高風險)
 
 YOLO 權重與 TensorRT engine 因體積及環境差異不納入 repository；號誌 CNN、ByteTrack 設定與道路 ROI 則已附上。
 
+## 完整風險流程與時間標註
+
+整理版已將正式的 16 維單一車輛模型、完整語意政策鏈、最多 16 台車的場景聚合、59 維場景模型及 Hybrid 融合接成同一個命令：
+
+```bash
+traffic-risk run-risk \
+  outputs/upstream/c4o_features.csv \
+  outputs/upstream/trajectory_features.csv \
+  outputs/tracks \
+  outputs/case14 \
+  --device auto
+```
+
+輸出包含可稽核的中間特徵、`single_vehicle/single_vehicle_risk.csv`、`scene/scene_risk.csv` 與最終 `traffic_risk.csv`。目前 `run-risk` 的公開邊界從「上游語意時間窗」開始；原始影片的 YOLO/ByteTrack 可在同一 repository 執行，而將追蹤 CSV 轉成 C4O 與軌跡語意表的舊研究腳本仍在進行去歷史依賴整理，未用假資料或簡化規則冒充正式結果。詳見 [執行流程](docs/pipeline.md)。
+
+四案例限定的時間標註工具可直接讀取影片與追蹤框：
+
+```bash
+traffic-risk annotate 14 --tracks outputs/14/tracks.csv
+# 相容舊名稱的入口
+python scripts/tcn_annotation_gui.py 14 --tracks outputs/14/tracks.csv
+```
+
+可標註整體場景或指定車輛的風險區間，輸出格式與原本 `tcn_annotation_gui.py` 相容；介面程式已獨立整理，不依賴原始大型專案的絕對路徑。
+
 <details>
 <summary><strong>展開：完整偵測參數與舊版 yolotest.py 指令</strong></summary>
 
@@ -129,6 +162,7 @@ YOLO 權重與 TensorRT engine 因體積及環境差異不納入 repository；�
 | [資料介面](docs/data.md) | CSV、sidecar、NPZ 與輸出欄位 |
 | [等價驗證](docs/parity.md) | 與論文正式輸出的逐列比對 |
 | [版本來源](docs/provenance.md) | 正式模型來源與排除的歷史實驗 |
+| [執行流程](docs/pipeline.md) | 原始影片、語意特徵、單一車輛與場景推論的命令 |
 
 <details>
 <summary><strong>展開：Repository 結構與資料政策</strong></summary>
@@ -137,6 +171,7 @@ YOLO 權重與 TensorRT engine 因體積及環境差異不納入 repository；�
 configs/                  道路幾何、追蹤器與凍結門檻
 models/                   正式 checkpoint 與 SHA-256 manifest
 src/traffic_risk/         偵測、單一車輛風險與場景風險核心
+annotations/              四案例時間標註輸出（不含大型資料集）
 examples/demo/            四個真實案例的小型可執行資料
 assets/                   架構圖、方法圖、縮圖與獲獎證明
 docs/                     研究與工程文件

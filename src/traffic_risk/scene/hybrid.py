@@ -440,7 +440,12 @@ def build_hybrid_predictions(
 
 
 def refresh_labels_from_scene_windows(df: pd.DataFrame) -> pd.DataFrame:
-    """Use current scene-window labels, not potentially stale learned-prediction labels."""
+    """Use current labels when present and keep ``-1`` for live inference.
+
+    Labels are needed for evaluation, not for the hybrid decision itself.  The
+    historical evaluator rejected unlabeled rows here, which prevented the
+    same frozen rules from being used on a new video.
+    """
     out = df.copy()
     label_sources = {
         "y_4cls": "scene_y_original",
@@ -449,9 +454,6 @@ def refresh_labels_from_scene_windows(df: pd.DataFrame) -> pd.DataFrame:
     }
     for target, source in label_sources.items():
         out[target] = pd.to_numeric(out[source], errors="coerce").fillna(-1).astype(int)
-    invalid = int((out["y_4cls"] < 0).sum())
-    if invalid:
-        raise RuntimeError(f"hybrid predictions include rows without current scene labels: {invalid}")
     return out
 
 

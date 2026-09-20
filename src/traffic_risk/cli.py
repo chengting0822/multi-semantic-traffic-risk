@@ -25,6 +25,34 @@ def build_parser() -> argparse.ArgumentParser:
     single.add_argument("output", type=Path)
     single.add_argument("--device", default="auto")
 
+    full_single = commands.add_parser(
+        "run-single",
+        help="Build current-run semantic features and run the complete single-vehicle pipeline",
+    )
+    full_single.add_argument("c4o_features", type=Path, help="Upstream/C4O window feature CSV")
+    full_single.add_argument("trajectory_features", type=Path, help="Trajectory semantic sidecar CSV")
+    full_single.add_argument("timestamp_dir", type=Path, help="Directory containing <video_id>.csv tracking files")
+    full_single.add_argument("output_dir", type=Path)
+    full_single.add_argument("--lane-map", type=Path, default=CONFIG_DIR / "lane_map.json")
+    full_single.add_argument("--stop-lines", type=Path, default=CONFIG_DIR / "stop_lines.json")
+    full_single.add_argument("--device", default="auto")
+    full_single.add_argument("--overwrite-cache", action="store_true")
+
+    full_risk = commands.add_parser(
+        "run-risk",
+        help="Run semantic rebuilding, single-vehicle risk, and scene risk",
+    )
+    full_risk.add_argument("c4o_features", type=Path)
+    full_risk.add_argument("trajectory_features", type=Path)
+    full_risk.add_argument("timestamp_dir", type=Path)
+    full_risk.add_argument("output_dir", type=Path)
+    full_risk.add_argument("--annotations", type=Path, default=Path("annotations"))
+    full_risk.add_argument("--lane-map", type=Path, default=CONFIG_DIR / "lane_map.json")
+    full_risk.add_argument("--stop-lines", type=Path, default=CONFIG_DIR / "stop_lines.json")
+    full_risk.add_argument("--ipm", type=Path, default=CONFIG_DIR / "ipm.json")
+    full_risk.add_argument("--device", default="auto")
+    full_risk.add_argument("--overwrite-cache", action="store_true")
+
     policy = commands.add_parser("apply-single-policies", help="Apply the frozen semantic policy chain")
     policy.add_argument("windows", type=Path)
     policy.add_argument("output", type=Path)
@@ -59,6 +87,12 @@ def build_parser() -> argparse.ArgumentParser:
     scene_pipeline.add_argument("--device", default="auto")
     scene_pipeline.add_argument("--batch-size", type=int, default=256)
     scene_pipeline.add_argument("--labeled-only", action="store_true")
+
+    annotate = commands.add_parser("annotate", help="Open the four-case temporal risk annotation GUI")
+    annotate.add_argument("case_id", choices=["14", "76", "96", "115"])
+    annotate.add_argument("--video", type=Path)
+    annotate.add_argument("--tracks", type=Path)
+    annotate.add_argument("--output", type=Path, dest="annotation")
     return parser
 
 
@@ -101,6 +135,41 @@ def main(argv: list[str] | None = None) -> int:
 
         frame = pd.read_csv(args.features, low_memory=False)
         result = SingleVehicleRiskModel(device=args.device).predict(frame)
+    elif args.command == "run-single":
+        from .single_vehicle.runner import run_single_vehicle_pipeline
+
+        run = run_single_vehicle_pipeline(
+            c4o_features=args.c4o_features,
+            trajectory_features=args.trajectory_features,
+            timestamp_dir=args.timestamp_dir,
+            lane_map=args.lane_map,
+            stop_lines=args.stop_lines,
+            output_dir=args.output_dir,
+            device=args.device,
+            overwrite_cache=args.overwrite_cache,
+        )
+        print(
+            f"output={args.output_dir / 'single_vehicle_risk.csv'} "
+            f"rows={len(run.final_windows)} cache={json.dumps(run.frame_cache_summary, sort_keys=True)}"
+        )
+        return 0
+    elif args.command == "run-risk":
+        from .pipeline import run_risk_pipeline
+
+        output = run_risk_pipeline(
+            c4o_features=args.c4o_features,
+            trajectory_features=args.trajectory_features,
+            timestamp_dir=args.timestamp_dir,
+            output_dir=args.output_dir,
+            annotation_dir=args.annotations,
+            lane_map=args.lane_map,
+            stop_lines=args.stop_lines,
+            ipm=args.ipm,
+            device=args.device,
+            overwrite_cache=args.overwrite_cache,
+        )
+        print(f"output={output}")
+        return 0
     elif args.command == "apply-single-policies":
         from .single_vehicle.pipeline import PolicyInputs, apply_policy_chain
 
@@ -135,6 +204,16 @@ def main(argv: list[str] | None = None) -> int:
             batch_size=args.batch_size,
             labeled_only=args.labeled_only,
         )
+    elif args.command == "annotate":
+        from .annotation.gui import launch_annotation_gui
+
+        launch_annotation_gui(
+            args.case_id,
+            video=args.video,
+            tracks=args.tracks,
+            annotation=args.annotation,
+        )
+        return 0
     else:  # pragma: no cover
         raise AssertionError(args.command)
 
