@@ -8,6 +8,7 @@ in memory while the timestamp source is written.
 from __future__ import annotations
 
 import csv
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterator
@@ -15,6 +16,7 @@ from typing import Any, Iterator
 import pandas as pd
 
 from traffic_risk.identifiers import canonical_id
+from .car_tracks import car_track_ids, update_class_counts
 
 
 WINDOW_SEC = 0.6667
@@ -172,6 +174,7 @@ def prepare_tracking_csv(
 
     row_count = 0
     track_bounds: dict[int, tuple[float, float]] = {}
+    class_counts: dict[int, Counter[int]] = {}
     wrote_header = False
     try:
         for chunk in _timestamp_chunks(
@@ -190,6 +193,7 @@ def prepare_tracking_csv(
             )
             wrote_header = True
             row_count += len(chunk)
+            update_class_counts(class_counts, chunk)
             valid = chunk.loc[chunk["track_id"].ge(0), ["track_id", "timestamp_sec"]]
             if not valid.empty:
                 bounds = valid.groupby("track_id", sort=False)["timestamp_sec"].agg(["min", "max"])
@@ -207,7 +211,11 @@ def prepare_tracking_csv(
         temporary_csv.unlink(missing_ok=True)
         raise
 
-    windows = _reference_windows(track_bounds, resolved_video_id)
+    accepted_ids = car_track_ids(class_counts)
+    windows = _reference_windows(
+        {track_id: bounds for track_id, bounds in track_bounds.items() if track_id in accepted_ids},
+        resolved_video_id,
+    )
     windows.to_csv(reference_csv, index=False)
     return TrackingPreparation(
         video_id=resolved_video_id,
@@ -215,7 +223,7 @@ def prepare_tracking_csv(
         timestamp_csv=timestamp_csv,
         reference_windows_csv=reference_csv,
         detector_rows=row_count,
-        track_count=len(track_bounds),
+        track_count=len(accepted_ids),
         reference_window_count=len(windows),
     )
 

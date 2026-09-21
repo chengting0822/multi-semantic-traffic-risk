@@ -49,6 +49,41 @@ def build_parser() -> argparse.ArgumentParser:
     redlight.add_argument("output_dir", type=Path)
     redlight.add_argument("--stop-lines", type=Path, default=CONFIG_DIR / "stop_lines.json")
 
+    trajectory = commands.add_parser(
+        "build-trajectory",
+        help="Build accepted fixed20/GMM/v8 trajectory semantics from timestamped tracks",
+    )
+    trajectory.add_argument("timestamp_csv", type=Path)
+    trajectory.add_argument("output_dir", type=Path)
+    trajectory.add_argument("--lane-map", type=Path, default=CONFIG_DIR / "lane_map.json")
+    trajectory.add_argument("--double-yellow", type=Path, default=CONFIG_DIR / "double_yellow.json")
+    trajectory.add_argument("--model", type=Path, default=MODEL_DIR / "trajectory_gmm_b5.json")
+    trajectory.add_argument("--chunksize", type=int, default=250_000)
+
+    fusion = commands.add_parser(
+        "build-fusion-v0",
+        help="Align trajectory, overspeed, and red-light modules into the accepted 15D semantic table",
+    )
+    fusion.add_argument("trajectory_sidecar", type=Path)
+    fusion.add_argument("overspeed_features", type=Path)
+    fusion.add_argument("redlight_features", type=Path)
+    fusion.add_argument("output_dir", type=Path)
+    fusion.add_argument("--overspeed-gru", action="store_true", help="Input already contains GRU-ready overspeed columns")
+    fusion.add_argument("--redlight-gru", action="store_true", help="Input already contains GRU-ready red-light columns")
+
+    semantics = commands.add_parser(
+        "build-semantics-v0",
+        help="Run all three car-only upstream branches and their audited 15D fusion intermediate",
+    )
+    semantics.add_argument("timestamp_csv", type=Path)
+    semantics.add_argument("output_dir", type=Path)
+    semantics.add_argument("--lane-map", type=Path, default=CONFIG_DIR / "lane_map.json")
+    semantics.add_argument("--double-yellow", type=Path, default=CONFIG_DIR / "double_yellow.json")
+    semantics.add_argument("--trajectory-model", type=Path, default=MODEL_DIR / "trajectory_gmm_b5.json")
+    semantics.add_argument("--ipm", type=Path, default=CONFIG_DIR / "ipm.json")
+    semantics.add_argument("--stop-lines", type=Path, default=CONFIG_DIR / "stop_lines.json")
+    semantics.add_argument("--chunksize", type=int, default=250_000)
+
     single = commands.add_parser("predict-single", help="Run the frozen single-vehicle GRU on a prepared feature CSV")
     single.add_argument("features", type=Path)
     single.add_argument("output", type=Path)
@@ -140,6 +175,7 @@ def doctor() -> int:
                 MODEL_DIR / "single_vehicle_normalization.json",
                 MODEL_DIR / "scene_risk.pt",
                 MODEL_DIR / "traffic_light_classifier.pt",
+                MODEL_DIR / "trajectory_gmm_b5.json",
                 CONFIG_DIR / "scene_hybrid.json",
             )
         },
@@ -212,6 +248,47 @@ def main(argv: list[str] | None = None) -> int:
             "sidecar": str(sidecar_path),
             "rows": len(features.windows),
         }, ensure_ascii=False, indent=2))
+        return 0
+    if args.command == "build-trajectory":
+        from .upstream.trajectory.runner import build_trajectory_features, write_trajectory_features
+
+        features = build_trajectory_features(
+            timestamp_csv=args.timestamp_csv,
+            lane_map_json=args.lane_map,
+            double_yellow_json=args.double_yellow,
+            model_json=args.model,
+            chunksize=args.chunksize,
+        )
+        paths = write_trajectory_features(features, args.output_dir)
+        print(json.dumps({"rows": len(features.windows), **{key: str(value) for key, value in paths.items()}}, ensure_ascii=False, indent=2))
+        return 0
+    if args.command == "build-fusion-v0":
+        from .upstream.fusion import build_fusion_features, write_fusion_features
+
+        features = build_fusion_features(
+            pd.read_csv(args.trajectory_sidecar, low_memory=False),
+            pd.read_csv(args.overspeed_features, low_memory=False),
+            pd.read_csv(args.redlight_features, low_memory=False),
+            overspeed_is_gru=args.overspeed_gru,
+            redlight_is_gru=args.redlight_gru,
+        )
+        paths = write_fusion_features(features, args.output_dir)
+        print(json.dumps({"rows": len(features.windows), **{key: str(value) for key, value in paths.items()}}, ensure_ascii=False, indent=2))
+        return 0
+    if args.command == "build-semantics-v0":
+        from .upstream.runner import build_semantics_v0
+
+        manifest = build_semantics_v0(
+            timestamp_csv=args.timestamp_csv,
+            output_dir=args.output_dir,
+            lane_map=args.lane_map,
+            double_yellow=args.double_yellow,
+            trajectory_model=args.trajectory_model,
+            ipm=args.ipm,
+            stop_lines=args.stop_lines,
+            chunksize=args.chunksize,
+        )
+        print(json.dumps({"car_window_count": manifest["car_window_count"], "fusion": manifest["fusion"]["fusion"]}, ensure_ascii=False, indent=2))
         return 0
     if args.command == "predict-single":
         from .single_vehicle.inference import SingleVehicleRiskModel

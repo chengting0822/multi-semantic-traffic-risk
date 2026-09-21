@@ -20,6 +20,11 @@
       "bytes": 98417,
       "sha256": "f7d61adfb391244aa0f87fc54a3afd552976d10efa3cf7fabd46c97656d604b4",
       "purpose": "Traffic-light state classifier used by the video front end"
+    },
+    "trajectory_gmm_b5.json": {
+      "bytes": 281803,
+      "sha256": "4f1daf0c247a0157040f9afc1bedcdf50b65f36f12400ed5bdf0a8446dbcd1f9",
+      "purpose": "Frozen scaler and 10-component full-covariance B5 trajectory GMM, converted to portable JSON"
     }
   },
   "excluded": {

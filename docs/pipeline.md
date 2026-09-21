@@ -10,8 +10,12 @@
 逐幀追蹤 CSV
   ↓ 分批時間轉換 + 每車時間視窗
 時間追蹤表 + reference windows
+  ├─ 固定 20 點重採樣 + GMM + 車道幾何 → 異常軌跡語意
   ├─ IPM 底部中心投影 + 時間平滑 + 可靠度 → 超速語意
   └─ 號誌時序 + 停止線跨越 + 跨線後前進 → 闖紅燈語意
+      ↓ 三分支 v0 融合（可稽核的 15 維中間表）
+
+目前尚待抽離：v8 三分支融合 → 16 維 C4O 特徵
 
 C4O 上游時間窗 + 軌跡語意時間窗
   ↓ 車道、紅燈區、軌跡脈絡與尾端特徵重建
@@ -24,7 +28,7 @@ C4O 上游時間窗 + 軌跡語意時間窗
 整體交通風險
 ```
 
-偵測由 `traffic-risk detect` 執行，時間轉換由 `traffic-risk prepare-tracks` 執行，超速與闖紅燈分支分別由 `build-overspeed` 與 `build-redlight` 執行，後半段由 `traffic-risk run-risk` 執行。四支 Demo 只是可重現範例，各命令的輸入路徑與影片 ID 均可替換。軌跡分支與三分支融合尚在去除歷史依賴，現階段保留成明確邊界，避免把舊基準版誤稱為論文正式版。
+偵測由 `traffic-risk detect` 執行，時間轉換由 `traffic-risk prepare-tracks` 執行，三個上游分支和 v0 融合可由 `build-semantics-v0` 一起執行。後半段目前仍從正式 C4O 表與軌跡語意表開始，由 `traffic-risk run-risk` 執行。四支 Demo 只是可重現範例，程式沒有影片白名單。v0 表並不是 C4O 模型輸入；在 v8 融合與 canonical 特徵等價驗證完成前，不會把它冒充最終風險結果。
 
 ## 安裝與影片
 
@@ -60,6 +64,25 @@ traffic-risk prepare-tracks \
 
 輸出 `timestamps/intersection-a.csv` 與 `reference_windows.csv`。讀取預設每批 250,000 列，可用 `--chunksize` 調整；影片 ID 可為 `14` 之類數字，也可為 `intersection-a` 之類文字。
 
+本研究只評估汽車。`reference_windows.csv` 只包含同一軌跡過半數偵測幀為 `cls=2` 的汽車 ID；同一 ID 若偶爾被誤判為其他類別，所有幀仍保留。平手或非汽車佔多數的軌跡不進入風險分析。號誌與非汽車列仍留在 timestamp CSV，供號誌分析及稽核。
+
+### 2.0 一次建立三分支與 v0 融合
+
+```bash
+traffic-risk build-semantics-v0 \
+  outputs/intersection-a/upstream/timestamps/intersection-a.csv \
+  outputs/intersection-a/semantics \
+  --lane-map configs/lane_map.json \
+  --double-yellow configs/double_yellow.json \
+  --trajectory-model models/trajectory_gmm_b5.json \
+  --ipm configs/ipm.json \
+  --stop-lines configs/stop_lines.json
+```
+
+輸出 `trajectory/`、`overspeed/`、`redlight/`、`fusion/semantic_fusion_v0.csv` 及 manifest。這個命令可用於任意影片產生的 timestamp CSV，但幾何設定須與攝影機視角相符。`semantic_fusion_v0.csv` 是正式三分支 v0 的 15 維中間特徵，不是 16 維 C4O 模型特徵，也不會輸出最終風險。
+
+若要分步檢查，可使用下面各分支指令。
+
 ### 2.1 建立超速語意
 
 ```bash
@@ -83,6 +106,18 @@ traffic-risk build-redlight \
 ```
 
 此分支對齊每幀號誌狀態與車輛軌跡，檢查停止線跨越、跨線時是否紅燈，以及跨線後是否持續前進。輸出 `redlight_features.csv` 與 `redlight_sidecar.csv`。停止線設定必須對應影片的相機視角。
+
+### 2.3 建立異常軌跡語意
+
+```bash
+traffic-risk build-trajectory \
+  outputs/intersection-a/upstream/timestamps/intersection-a.csv \
+  outputs/intersection-a/upstream/trajectory \
+  --lane-map configs/lane_map.json \
+  --double-yellow configs/double_yellow.json
+```
+
+此分支分批讀取追蹤 CSV，以固定 20 點重採樣、凍結 GMM、因果 prefix 與正式 v8 子類型公式建立 `trajectory_features.csv` 和 `trajectory_sidecar.csv`。如需手動執行 v0 融合，三分支必須使用同一批汽車時間窗，再執行 `traffic-risk build-fusion-v0 TRAJECTORY_SIDECAR OVERSPEED_FEATURES REDLIGHT_FEATURES OUTPUT_DIR`；缺少對應時間窗時會報錯，不會補零。
 
 ## 3. 完整風險推論
 

@@ -31,6 +31,14 @@
 - 精簡後位置：`src/traffic_risk/upstream/redlight/`。
 - 保留號誌時序聚合、停止線符號距離、跨線事件、跨線後移動與證據分數；移除舊 CLI 的絕對路徑與報表程式。
 
+### 上游異常軌跡與 v0 語意融合
+
+- 軌跡來源：`proposal_a_stage2a17r_s3_fixed20.py`、`proposal_a_stage2a17r_window_first_anomaly_branch.py`、`build_trajectory_semantic_features_v0.py` 與正式 v8 軌跡公式。
+- 精簡後位置：`src/traffic_risk/upstream/trajectory/`；保留固定 20 點重採樣、40 維統計與車道特徵、凍結 B5 GMM、因果 prefix、震盪與 v8 子類型語意。
+- GMM 原始 `scaler.pkl`／`gmm.pkl` 轉成 `models/trajectory_gmm_b5.json`；推論只需要 NumPy，不載入 pickle 或 scikit-learn。
+- v0 接合來源：超速及闖紅燈的 `*_to_gru_adapter_v0.py`、`semantic_fusion_joiner_v0.py`；精簡後位置：`src/traffic_risk/upstream/fusion.py`。
+- v0 融合表是可稽核的中間表；目前正式 16 維 C4O 輸入還需要後續 v8 融合與 canonical 特徵建置，不能把 v0 表當成最終模型輸入。
+
 ### 場景風險
 
 - 論文鎖定基線：`scene_v93_retrain_hybrid_select_v2_learned_high`

@@ -16,7 +16,11 @@ tl_state, tl_prob_green, tl_prob_red
 `traffic-risk prepare-tracks` 以分批方式轉換大型 CSV，產生：
 
 - `timestamps/<video_id>.csv`：在原追蹤列加上 `timestamp_sec`、影片 ID、case key 與 FPS。
-- `reference_windows.csv`：每條軌跡自首幀起建立 0.6667 秒視窗，步距為 0.3333 秒。
+- `reference_windows.csv`：只對汽車軌跡自首幀起建立 0.6667 秒視窗，步距為 0.3333 秒。原始 timestamp CSV 仍保留其他類別與號誌列，供號誌分析及稽核。
+
+汽車以同一 `track_id` 超過半數的偵測幀屬於 `cls=2` 判定；平手或非汽車佔多數時不納入分析。不逐幀丟棄已確認汽車軌跡中偶發的非汽車標籤。軌跡、超速與闖紅燈分支都沿用這些汽車 ID；這避免同一輛汽車因 YOLO 類別短暫跳動而斷軌。
+
+`build-semantics-v0` 可由任意影片的 timestamp CSV 建立三個正式上游分支及 15 維 v0 融合中間表。這張表**不是**目前凍結單一車輛模型所需的 16 維 C4O 輸入，不能直接交給 `run-risk`。
 
 `video_id` 為識別標籤，可使用文字，不會強制轉成整數。為了安全建立檔名，不允許包含 `/` 或 `\\`。
 
