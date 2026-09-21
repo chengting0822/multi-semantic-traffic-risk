@@ -19,6 +19,12 @@
 - 架構：16 維輸入、單層 causal GRU、hidden size 64、三級輸出。
 - v94 只更動論文評估標籤邊界，不是新的推論模型，因此沒有當成 runtime 版本。
 
+### 上游超速語意
+
+- 公式來源：`overspeed_module_v0.py` 與 `ipm_speed_utils.py`。
+- 精簡後位置：`src/traffic_risk/upstream/overspeed/`。
+- 保留 IPM 投影、rolling median + time-aware EMA、p95 視窗速度、異常極速排除、可靠度與分級公式；移除舊 CLI 的工作區絕對路徑與報表程式。
+
 ### 場景風險
 
 - 論文鎖定基線：`scene_v93_retrain_hybrid_select_v2_learned_high`

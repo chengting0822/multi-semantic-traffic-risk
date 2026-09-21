@@ -10,6 +10,8 @@
 逐幀追蹤 CSV
   ↓ 分批時間轉換 + 每車時間視窗
 時間追蹤表 + reference windows
+  ↓ IPM 底部中心投影 + 時間平滑 + 可靠度判定
+超速語意視窗
 
 C4O 上游時間窗 + 軌跡語意時間窗
   ↓ 車道、紅燈區、軌跡脈絡與尾端特徵重建
@@ -22,7 +24,7 @@ C4O 上游時間窗 + 軌跡語意時間窗
 整體交通風險
 ```
 
-偵測由 `traffic-risk detect` 執行，時間轉換由 `traffic-risk prepare-tracks` 執行，後半段由 `traffic-risk run-risk` 執行。四支 Demo 只是可重現範例，三個命令的輸入路徑與影片 ID 均可替換。「時間視窗 → C4O／軌跡語意」仍在去除歷史依賴，現階段保留成明確邊界，避免把舊基準版誤稱為論文正式版。
+偵測由 `traffic-risk detect` 執行，時間轉換由 `traffic-risk prepare-tracks` 執行，超速分支由 `traffic-risk build-overspeed` 執行，後半段由 `traffic-risk run-risk` 執行。四支 Demo 只是可重現範例，各命令的輸入路徑與影片 ID 均可替換。軌跡與闖紅燈分支尚在去除歷史依賴，現階段保留成明確邊界，避免把舊基準版誤稱為論文正式版。
 
 ## 安裝與影片
 
@@ -57,6 +59,18 @@ traffic-risk prepare-tracks \
 ```
 
 輸出 `timestamps/intersection-a.csv` 與 `reference_windows.csv`。讀取預設每批 250,000 列，可用 `--chunksize` 調整；影片 ID 可為 `14` 之類數字，也可為 `intersection-a` 之類文字。
+
+### 2.1 建立超速語意
+
+```bash
+traffic-risk build-overspeed \
+  outputs/intersection-a/upstream/timestamps/intersection-a.csv \
+  outputs/intersection-a/upstream/reference_windows.csv \
+  outputs/intersection-a/upstream/overspeed \
+  --ipm configs/ipm.json
+```
+
+這是研究期接受的公式：車輛框底部中心經 IPM 轉為世界座標，依時間差計算 km/h，再做 rolling median、time-aware EMA、視窗 p95、可靠度與超速等級判定。輸出 `overspeed_features.csv` 與 `overspeed_sidecar.csv`。IPM 與影片必須對應同一相機視角。
 
 ## 3. 完整風險推論
 

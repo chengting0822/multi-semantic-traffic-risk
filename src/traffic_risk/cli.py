@@ -31,6 +31,15 @@ def build_parser() -> argparse.ArgumentParser:
     prepare.add_argument("--fps", type=float, help="Override FPS instead of reading video metadata")
     prepare.add_argument("--chunksize", type=int, default=250_000)
 
+    overspeed = commands.add_parser(
+        "build-overspeed",
+        help="Build accepted IPM-based overspeed semantics from timestamped tracks",
+    )
+    overspeed.add_argument("timestamp_csv", type=Path)
+    overspeed.add_argument("reference_windows_csv", type=Path)
+    overspeed.add_argument("output_dir", type=Path)
+    overspeed.add_argument("--ipm", type=Path, default=CONFIG_DIR / "ipm.json")
+
     single = commands.add_parser("predict-single", help="Run the frozen single-vehicle GRU on a prepared feature CSV")
     single.add_argument("features", type=Path)
     single.add_argument("output", type=Path)
@@ -163,6 +172,21 @@ def main(argv: list[str] | None = None) -> int:
             "detector_rows": prepared.detector_rows,
             "track_count": prepared.track_count,
             "reference_window_count": prepared.reference_window_count,
+        }, ensure_ascii=False, indent=2))
+        return 0
+    if args.command == "build-overspeed":
+        from .upstream.overspeed.runner import build_overspeed_features, write_overspeed_features
+
+        features = build_overspeed_features(
+            timestamp_csv=args.timestamp_csv,
+            reference_windows_csv=args.reference_windows_csv,
+            ipm_json=args.ipm,
+        )
+        windows_path, sidecar_path = write_overspeed_features(features, args.output_dir)
+        print(json.dumps({
+            "windows": str(windows_path),
+            "sidecar": str(sidecar_path),
+            "rows": len(features.windows),
         }, ensure_ascii=False, indent=2))
         return 0
     if args.command == "predict-single":
