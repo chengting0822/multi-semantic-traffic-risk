@@ -68,3 +68,12 @@ def test_car_track_keeps_same_id_when_frame_class_flips(tmp_path: Path) -> None:
     assert set(trajectory.fixed20["track_id"].astype(str)) == {"1"}
     assert int(trajectory.fixed20.iloc[0]["detection_count"]) > 2
     assert len(trajectory.windows) == len(trajectory.sidecar)
+
+    # Interrupted earlier runs can leave a .part file; reruns must replace it,
+    # not append the same detector rows after stale content.
+    prepared.timestamp_csv.with_suffix(".csv.part").write_text("stale\n", encoding="utf-8")
+    again = prepare_tracking_csv(
+        detector_csv=detector, video_path=video,
+        output_dir=tmp_path / "prepared", fps=30.0, chunksize=2,
+    )
+    assert len(pd.read_csv(again.timestamp_csv)) == len(rows)

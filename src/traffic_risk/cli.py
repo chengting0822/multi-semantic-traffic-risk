@@ -84,6 +84,40 @@ def build_parser() -> argparse.ArgumentParser:
     semantics.add_argument("--stop-lines", type=Path, default=CONFIG_DIR / "stop_lines.json")
     semantics.add_argument("--chunksize", type=int, default=250_000)
 
+    semantics_v8 = commands.add_parser(
+        "build-semantics-v8",
+        help="Build formal car-only v8 branches, S3.3 prefix, and C4O model inputs",
+    )
+    semantics_v8.add_argument("timestamp_csv", type=Path)
+    semantics_v8.add_argument("output_dir", type=Path)
+    semantics_v8.add_argument("--lane-map", type=Path, default=CONFIG_DIR / "lane_map.json")
+    semantics_v8.add_argument("--double-yellow", type=Path, default=CONFIG_DIR / "double_yellow.json")
+    semantics_v8.add_argument("--trajectory-model", type=Path, default=MODEL_DIR / "trajectory_gmm_b5.json")
+    semantics_v8.add_argument("--ipm", type=Path, default=CONFIG_DIR / "ipm.json")
+    semantics_v8.add_argument("--stop-lines", type=Path, default=CONFIG_DIR / "stop_lines.json")
+    semantics_v8.add_argument("--chunksize", type=int, default=250_000)
+
+    video_run = commands.add_parser("run-video", help="Run a video through detection, C4O, and final traffic risk")
+    video_run.add_argument("video", type=Path)
+    video_run.add_argument("output_dir", type=Path)
+    video_run.add_argument("--yolo-model", type=Path, help="YOLO weights; required unless --tracks-csv is given")
+    video_run.add_argument("--tracks-csv", type=Path, help="Use an existing detector CSV instead of rerunning YOLO")
+    video_run.add_argument("--video-id", help="Logical video ID; defaults to the filename stem")
+    video_run.add_argument("--camera-config", type=Path, default=CONFIG_DIR / "camera_roi.json")
+    video_run.add_argument("--tracker-config", type=Path, default=CONFIG_DIR / "bytetrack.yaml")
+    video_run.add_argument("--traffic-light-model", type=Path, default=MODEL_DIR / "traffic_light_classifier.pt")
+    video_run.add_argument("--tl-roi", default="1079,426;1119,426;1119,443;1079,443", help="Traffic-light ROI polygon for this camera")
+    video_run.add_argument("--classes", default="2,3,5,7,9", help="YOLO classes to track before car-majority filtering")
+    video_run.add_argument("--lane-map", type=Path, default=CONFIG_DIR / "lane_map.json")
+    video_run.add_argument("--double-yellow", type=Path, default=CONFIG_DIR / "double_yellow.json")
+    video_run.add_argument("--stop-lines", type=Path, default=CONFIG_DIR / "stop_lines.json")
+    video_run.add_argument("--ipm", type=Path, default=CONFIG_DIR / "ipm.json")
+    video_run.add_argument("--annotations", type=Path, help="Optional temporal labels; omitted for unlabeled inference")
+    video_run.add_argument("--detector-device", type=int, default=0)
+    video_run.add_argument("--device", default="auto", help="PyTorch inference device")
+    video_run.add_argument("--fps", type=float, help="Override video metadata FPS")
+    video_run.add_argument("--chunksize", type=int, default=250_000)
+
     single = commands.add_parser("predict-single", help="Run the frozen single-vehicle GRU on a prepared feature CSV")
     single.add_argument("features", type=Path)
     single.add_argument("output", type=Path)
@@ -289,6 +323,34 @@ def main(argv: list[str] | None = None) -> int:
             chunksize=args.chunksize,
         )
         print(json.dumps({"car_window_count": manifest["car_window_count"], "fusion": manifest["fusion"]["fusion"]}, ensure_ascii=False, indent=2))
+        return 0
+    if args.command == "build-semantics-v8":
+        from .upstream.runner import build_semantics_v8
+
+        manifest = build_semantics_v8(
+            timestamp_csv=args.timestamp_csv, output_dir=args.output_dir,
+            lane_map=args.lane_map, double_yellow=args.double_yellow,
+            trajectory_model=args.trajectory_model, ipm=args.ipm,
+            stop_lines=args.stop_lines, chunksize=args.chunksize,
+        )
+        print(json.dumps({"car_window_count": manifest["car_window_count"], "c4o_window_count": manifest["c4o_window_count"], "c4o_features": manifest["v8"]["c4o_features"]}, ensure_ascii=False, indent=2))
+        return 0
+    if args.command == "run-video":
+        from .video_runner import run_video_pipeline
+
+        path = run_video_pipeline(
+            video=args.video, output_dir=args.output_dir, yolo_model=args.yolo_model,
+            tracks_csv=args.tracks_csv, video_id=args.video_id,
+            camera_config=args.camera_config, tracker_config=args.tracker_config,
+            traffic_light_model=args.traffic_light_model, lane_map=args.lane_map,
+            tl_roi=args.tl_roi,
+            classes=args.classes,
+            double_yellow=args.double_yellow, stop_lines=args.stop_lines,
+            ipm=args.ipm, annotation_dir=args.annotations,
+            detector_device=args.detector_device, device=args.device,
+            fps=args.fps, chunksize=args.chunksize,
+        )
+        print(f"output={path}")
         return 0
     if args.command == "predict-single":
         from .single_vehicle.inference import SingleVehicleRiskModel

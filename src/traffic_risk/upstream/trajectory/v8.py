@@ -431,6 +431,7 @@ def build_trajectory_v8_frames_from_merged(
         "start_sec",
         "end_sec",
         "flow_cos",
+        "bidir_max_cos",
         "occupied_lane_flow_cos",
         "reversed_flag",
         "flow_conflict_score",
@@ -448,10 +449,15 @@ def build_trajectory_v8_frames_from_merged(
         "window_double_yellow_cross_count",
         "window_double_yellow_crossed_once",
         "window_double_yellow_side_switch_count",
+        "window_after_crossing_opposite_lane_occupancy_ratio",
+        "window_after_crossing_opposite_lane_run_length",
         "trajectory_subtype_peak",
         "trajectory_subtype_entropy",
         "artifact_bbox_area_cv",
         "artifact_max_center_step",
+        "artifact_frame_gap_max",
+        "artifact_conf_min",
+        "tracking_quality_bad",
         "heading_motion_gate",
         *OSCILLATION_SIDECAR_COLUMNS,
     ]
@@ -462,4 +468,3 @@ def build_trajectory_v8_frames_from_merged(
     return output_frame, sidecar_frame
 
 __all__ = ["build_oscillation_sidecar_from_samples", "build_trajectory_v8_frames_from_merged"]
-

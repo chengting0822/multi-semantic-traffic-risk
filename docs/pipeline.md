@@ -2,7 +2,7 @@
 
 本專案把研究期間分散的正式模型整理為可測試的 Python package。所有路徑均可由參數指定，不會讀取原始專案的絕對路徑。
 
-## 目前可直接執行的部分
+## 完整資料流
 
 ```text
 影片
@@ -13,11 +13,8 @@
   ├─ 固定 20 點重採樣 + GMM + 車道幾何 → 異常軌跡語意
   ├─ IPM 底部中心投影 + 時間平滑 + 可靠度 → 超速語意
   └─ 號誌時序 + 停止線跨越 + 跨線後前進 → 闖紅燈語意
-      ↓ 三分支 v0 融合（可稽核的 15 維中間表）
-
-目前尚待抽離：v8 三分支融合 → 16 維 C4O 特徵
-
-C4O 上游時間窗 + 軌跡語意時間窗
+      ↓ 三分支 v0 中間表 → v8 政策輸出與融合 → S3.3 前綴重播（離線）
+12 維 C4O 核心特徵 + 4 維車道／紅燈區特徵
   ↓ 車道、紅燈區、軌跡脈絡與尾端特徵重建
 16 維單一車輛特徵
   ↓ Causal GRU + 完整語意政策鏈
@@ -28,7 +25,19 @@ C4O 上游時間窗 + 軌跡語意時間窗
 整體交通風險
 ```
 
-偵測由 `traffic-risk detect` 執行，時間轉換由 `traffic-risk prepare-tracks` 執行，三個上游分支和 v0 融合可由 `build-semantics-v0` 一起執行。後半段目前仍從正式 C4O 表與軌跡語意表開始，由 `traffic-risk run-risk` 執行。四支 Demo 只是可重現範例，程式沒有影片白名單。v0 表並不是 C4O 模型輸入；在 v8 融合與 canonical 特徵等價驗證完成前，不會把它冒充最終風險結果。
+離線一鍵入口為 `traffic-risk run-video`；分段入口仍保留 `detect`、`prepare-tracks`、`build-semantics-v8`、`run-risk`，方便查核。四支 Demo 不是白名單。v0 表仍只是中間表，不能直接餵給 GRU；正式輸入由 v8 與 C4O 建立。此流程會讀取完整影片與軌跡，尚不是串流／即時推論版本。
+
+```bash
+traffic-risk run-video /path/to/video.mp4 outputs/my-video \
+  --yolo-model /path/to/yolo26x.pt \
+  --video-id intersection-a \
+  --lane-map configs/lane_map.json \
+  --double-yellow configs/double_yellow.json \
+  --stop-lines configs/stop_lines.json \
+  --ipm configs/ipm.json
+```
+
+若已有同一影片的逐幀偵測表，可用 `--tracks-csv /path/to/tracks.csv` 取代 `--yolo-model`。輸出在 `outputs/my-video/risk/traffic_risk.csv`。攝影機位置改變時，ROI、號誌 ROI、車道、停止線與 IPM 都需要重新標定；預設設定只對研究場景有效。
 
 ## 安裝與影片
 
@@ -66,10 +75,12 @@ traffic-risk prepare-tracks \
 
 本研究只評估汽車。`reference_windows.csv` 只包含同一軌跡過半數偵測幀為 `cls=2` 的汽車 ID；同一 ID 若偶爾被誤判為其他類別，所有幀仍保留。平手或非汽車佔多數的軌跡不進入風險分析。號誌與非汽車列仍留在 timestamp CSV，供號誌分析及稽核。
 
-### 2.0 一次建立三分支與 v0 融合
+YOLO 預設追蹤類別為 `2,3,5,7,9`，沿用研究期設定；類別跳動只有在偵測器有輸出且沿用同一 ID 時才能補回。如需涵蓋其他誤分類別，可用 `run-video --classes ...` 擴充偵測範圍，但會改變追蹤結果，不能當作與研究期完全相同的輸入。
+
+### 2.0 一次建立三分支、v8 與 C4O
 
 ```bash
-traffic-risk build-semantics-v0 \
+traffic-risk build-semantics-v8 \
   outputs/intersection-a/upstream/timestamps/intersection-a.csv \
   outputs/intersection-a/semantics \
   --lane-map configs/lane_map.json \
@@ -79,7 +90,7 @@ traffic-risk build-semantics-v0 \
   --stop-lines configs/stop_lines.json
 ```
 
-輸出 `trajectory/`、`overspeed/`、`redlight/`、`fusion/semantic_fusion_v0.csv` 及 manifest。這個命令可用於任意影片產生的 timestamp CSV，但幾何設定須與攝影機視角相符。`semantic_fusion_v0.csv` 是正式三分支 v0 的 15 維中間特徵，不是 16 維 C4O 模型特徵，也不會輸出最終風險。
+輸出 `trajectory/`、`overspeed/`、`redlight/`、`fusion/` 的 v0 表，以及 `v8/` 的三分支政策表、融合表、S3.3 前綴與 `c4o_features.csv`。此命令可用於任意影片 ID，幾何設定仍須與攝影機視角相符。只需要舊版 15 維稽核表時可使用 `build-semantics-v0`。
 
 若要分步檢查，可使用下面各分支指令。
 

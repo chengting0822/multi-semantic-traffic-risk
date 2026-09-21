@@ -37,7 +37,8 @@
 - 精簡後位置：`src/traffic_risk/upstream/trajectory/`；保留固定 20 點重採樣、40 維統計與車道特徵、凍結 B5 GMM、因果 prefix、震盪與 v8 子類型語意。
 - GMM 原始 `scaler.pkl`／`gmm.pkl` 轉成 `models/trajectory_gmm_b5.json`；推論只需要 NumPy，不載入 pickle 或 scikit-learn。
 - v0 接合來源：超速及闖紅燈的 `*_to_gru_adapter_v0.py`、`semantic_fusion_joiner_v0.py`；精簡後位置：`src/traffic_risk/upstream/fusion.py`。
-- v0 融合表是可稽核的中間表；目前正式 16 維 C4O 輸入還需要後續 v8 融合與 canonical 特徵建置，不能把 v0 表當成最終模型輸入。
+- v0 融合表是可稽核的中間表，不能直接當成 GRU 輸入。正式輸入已由 `upstream/overspeed/v8.py`、`redlight/v8.py`、`fusion_v8.py`、`s33.py` 與 `canonical.py` 接通。這些只萃取推論公式，不帶入訓練標籤或舊目錄絕對路徑。
+- v8 公式對照 `build_overspeed_policy_outputs_v8.py`、`build_redlight_policy_outputs_v8.py`、`build_policygrounded_semantic_fusion_v8.py` 與其 in-memory calculator；C4O 與 S3.3 對照正式 canonical 特徵產生器。移植後只保留推論所需資料契約。
 
 ### 場景風險
 
@@ -48,7 +49,7 @@
 
 ## 明確排除的歷史或實驗內容
 
-- `online/run_full_mainline_streaming.py` 與 `online/single_vehicle_mainline_inference.py`：仍指向 2026-06-03 至 2026-06-05 的舊基線，且含失效的絕對路徑，只能作為舊串接行為參考。
+- `online/run_full_mainline_streaming.py` 與 `online/single_vehicle_mainline_inference.py`：整個腳本仍指向 2026-06-03 至 2026-06-05 的舊基線，且含失效的絕對路徑，因此不作為 runtime。當中的 v8 公式片段僅用於和正式 v8 模組交叉核對。
 - 場景模組舊 `CURRENT_BASELINE.md`：指向 6 月 4 日基線，晚於此文件的名稱不代表論文採用。
 - `scene_pair_stateful_interaction_v93_v1`：研究實驗，不是論文正式基線。
 - `scene_v93_retrain_hybrid_select_v3_train_hard_samples`：後續 hard-sample 實驗，不取代論文鎖定的 v2 learned-high。

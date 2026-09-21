@@ -186,7 +186,7 @@ def prepare_tracking_csv(
         ):
             chunk.to_csv(
                 temporary_csv,
-                mode="a",
+                mode="w" if not wrote_header else "a",
                 header=not wrote_header,
                 index=False,
                 quoting=csv.QUOTE_MINIMAL,

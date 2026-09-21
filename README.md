@@ -119,15 +119,15 @@ traffic-risk prepare-tracks \
   --video-id intersection-a
 ```
 
-三個正式上游語意分支與 v0 融合中間表可以一起建立：
+現在也可以從任意影片離線跑到最終風險；YOLO 權重需自行提供，道路幾何設定必須對應影片的攝影機：
 
 ```bash
-traffic-risk build-semantics-v0 \
-  outputs/my-video/upstream/timestamps/intersection-a.csv \
-  outputs/my-video/semantics
+traffic-risk run-video /path/to/intersection-a.mp4 outputs/intersection-a \
+  --yolo-model /path/to/yolo26x.pt \
+  --video-id intersection-a
 ```
 
-它只選汽車軌跡，但同一 `track_id` 的偶發類別跳動幀會保留。完整參數與分步執行方式見 [執行流程](docs/pipeline.md)。若想分別檢查 IPM 超速與闖紅燈分支，也可直接執行：
+若已有追蹤 CSV，可改用 `--tracks-csv outputs/tracks.csv` 跳過 YOLO。它只選汽車軌跡，但同一 `track_id` 的偶發類別跳動幀會保留。完整參數與分步執行方式見 [執行流程](docs/pipeline.md)。若想分別檢查 IPM 超速與闖紅燈分支，也可直接執行：
 
 ```bash
 traffic-risk build-overspeed \
@@ -158,7 +158,7 @@ traffic-risk run-risk \
   --device auto
 ```
 
-輸出包含可稽核的中間特徵、`single_vehicle/single_vehicle_risk.csv`、`scene/scene_risk.csv` 與最終 `traffic_risk.csv`。目前已獨立出「追蹤 CSV → 時間資料 → 汽車視窗 → 軌跡／超速／闖紅燈語意 → 15 維 v0 融合」；`run-risk` 仍從正式 16 維 C4O 表與軌跡語意表開始。v0 融合不能直接代替 C4O，兩者之間的 v8 融合與 canonical 特徵仍需萃取及驗證；因此目前不宣稱任意 MP4 已可一鍵跑到最終風險。詳見 [執行流程](docs/pipeline.md)。
+輸出包含可稽核的 v0／v8 中間特徵、C4O 輸入、單一車輛與場景風險，以及最終 `risk/traffic_risk.csv`。四支展示影片只是回歸範例，程式沒有影片白名單。研究期舊表和新版汽車同 ID 類別跳動政策可能有少量數值差異，詳見 [等價驗證](docs/parity.md)。
 
 時間標註工具可直接讀取影片與追蹤框。Demo ID 會自動套用內建路徑：
 
