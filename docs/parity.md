@@ -7,6 +7,7 @@
 | 元件 | 比對資料量 | 結果 |
 |---|---:|---|
 | IPM 超速語意分支，video 115 | 110 vehicle windows | 全部語意欄、可靠度與 sidecar 差異 0 |
+| 闖紅燈語意分支，video 115 | 110 vehicle windows | 全部事件欄、停止線證據與 sidecar 差異 0 |
 | 單一車輛 causal GRU + 正式 track postprocess，validation | 13,892 windows | raw/final 類別差異皆 0；機率最大絕對差約 3.99e-6 |
 | 單一車輛 causal GRU + 正式 track postprocess，test | 12,384 windows | raw/final 類別差異皆 0；機率最大絕對差約 2.68e-6 |
 | 單一車輛完整語意規則鏈 | 26,276 windows | current risk 差異 0；final cumulative risk 差異 0 |

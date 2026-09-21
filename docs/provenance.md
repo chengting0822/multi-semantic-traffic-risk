@@ -25,6 +25,12 @@
 - 精簡後位置：`src/traffic_risk/upstream/overspeed/`。
 - 保留 IPM 投影、rolling median + time-aware EMA、p95 視窗速度、異常極速排除、可靠度與分級公式；移除舊 CLI 的工作區絕對路徑與報表程式。
 
+### 上游闖紅燈語意
+
+- 公式來源：`redlight_module_v0.py`、`redlight_geometry_utils.py` 與 `traffic_light_utils.py`。
+- 精簡後位置：`src/traffic_risk/upstream/redlight/`。
+- 保留號誌時序聚合、停止線符號距離、跨線事件、跨線後移動與證據分數；移除舊 CLI 的絕對路徑與報表程式。
+
 ### 場景風險
 
 - 論文鎖定基線：`scene_v93_retrain_hybrid_select_v2_learned_high`

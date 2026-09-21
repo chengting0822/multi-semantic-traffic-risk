@@ -40,6 +40,15 @@ def build_parser() -> argparse.ArgumentParser:
     overspeed.add_argument("output_dir", type=Path)
     overspeed.add_argument("--ipm", type=Path, default=CONFIG_DIR / "ipm.json")
 
+    redlight = commands.add_parser(
+        "build-redlight",
+        help="Build accepted stop-line and traffic-light violation semantics",
+    )
+    redlight.add_argument("timestamp_csv", type=Path)
+    redlight.add_argument("reference_windows_csv", type=Path)
+    redlight.add_argument("output_dir", type=Path)
+    redlight.add_argument("--stop-lines", type=Path, default=CONFIG_DIR / "stop_lines.json")
+
     single = commands.add_parser("predict-single", help="Run the frozen single-vehicle GRU on a prepared feature CSV")
     single.add_argument("features", type=Path)
     single.add_argument("output", type=Path)
@@ -183,6 +192,21 @@ def main(argv: list[str] | None = None) -> int:
             ipm_json=args.ipm,
         )
         windows_path, sidecar_path = write_overspeed_features(features, args.output_dir)
+        print(json.dumps({
+            "windows": str(windows_path),
+            "sidecar": str(sidecar_path),
+            "rows": len(features.windows),
+        }, ensure_ascii=False, indent=2))
+        return 0
+    if args.command == "build-redlight":
+        from .upstream.redlight.runner import build_redlight_features, write_redlight_features
+
+        features = build_redlight_features(
+            timestamp_csv=args.timestamp_csv,
+            reference_windows_csv=args.reference_windows_csv,
+            stop_lines_json=args.stop_lines,
+        )
+        windows_path, sidecar_path = write_redlight_features(features, args.output_dir)
         print(json.dumps({
             "windows": str(windows_path),
             "sidecar": str(sidecar_path),

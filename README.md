@@ -129,6 +129,16 @@ traffic-risk build-overspeed \
   --ipm configs/ipm.json
 ```
 
+闖紅燈分支也使用同一份時間視窗：
+
+```bash
+traffic-risk build-redlight \
+  outputs/my-video/upstream/timestamps/intersection-a.csv \
+  outputs/my-video/upstream/reference_windows.csv \
+  outputs/my-video/upstream/redlight \
+  --stop-lines configs/stop_lines.json
+```
+
 整理版已將正式的 16 維單一車輛模型、完整語意政策鏈、最多 16 台車的場景聚合、59 維場景模型及 Hybrid 融合接成同一個命令：
 
 ```bash
@@ -140,7 +150,7 @@ traffic-risk run-risk \
   --device auto
 ```
 
-輸出包含可稽核的中間特徵、`single_vehicle/single_vehicle_risk.csv`、`scene/scene_risk.csv` 與最終 `traffic_risk.csv`。目前已獨立出「追蹤 CSV → 時間資料→每車視窗」與正式 IPM 超速分支；`run-risk` 仍從 C4O 與軌跡語意表開始。軌跡與闖紅燈語意分支正在去除舊專案絕對路徑與歷史實驗依賴，在尚未完成等價驗證前，不用簡化規則冒充正式結果。詳見 [執行流程](docs/pipeline.md)。
+輸出包含可稽核的中間特徵、`single_vehicle/single_vehicle_risk.csv`、`scene/scene_risk.csv` 與最終 `traffic_risk.csv`。目前已獨立出「追蹤 CSV → 時間資料→每車視窗」、IPM 超速與闖紅燈分支；`run-risk` 仍從 C4O 與軌跡語意表開始。軌跡語意與三分支融合正在去除舊專案絕對路徑與歷史實驗依賴，在尚未完成等價驗證前，不用簡化規則冒充正式結果。詳見 [執行流程](docs/pipeline.md)。
 
 時間標註工具可直接讀取影片與追蹤框。Demo ID 會自動套用內建路徑：
 

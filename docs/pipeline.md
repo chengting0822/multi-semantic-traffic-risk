@@ -10,8 +10,8 @@
 逐幀追蹤 CSV
   ↓ 分批時間轉換 + 每車時間視窗
 時間追蹤表 + reference windows
-  ↓ IPM 底部中心投影 + 時間平滑 + 可靠度判定
-超速語意視窗
+  ├─ IPM 底部中心投影 + 時間平滑 + 可靠度 → 超速語意
+  └─ 號誌時序 + 停止線跨越 + 跨線後前進 → 闖紅燈語意
 
 C4O 上游時間窗 + 軌跡語意時間窗
   ↓ 車道、紅燈區、軌跡脈絡與尾端特徵重建
@@ -24,7 +24,7 @@ C4O 上游時間窗 + 軌跡語意時間窗
 整體交通風險
 ```
 
-偵測由 `traffic-risk detect` 執行，時間轉換由 `traffic-risk prepare-tracks` 執行，超速分支由 `traffic-risk build-overspeed` 執行，後半段由 `traffic-risk run-risk` 執行。四支 Demo 只是可重現範例，各命令的輸入路徑與影片 ID 均可替換。軌跡與闖紅燈分支尚在去除歷史依賴，現階段保留成明確邊界，避免把舊基準版誤稱為論文正式版。
+偵測由 `traffic-risk detect` 執行，時間轉換由 `traffic-risk prepare-tracks` 執行，超速與闖紅燈分支分別由 `build-overspeed` 與 `build-redlight` 執行，後半段由 `traffic-risk run-risk` 執行。四支 Demo 只是可重現範例，各命令的輸入路徑與影片 ID 均可替換。軌跡分支與三分支融合尚在去除歷史依賴，現階段保留成明確邊界，避免把舊基準版誤稱為論文正式版。
 
 ## 安裝與影片
 
@@ -71,6 +71,18 @@ traffic-risk build-overspeed \
 ```
 
 這是研究期接受的公式：車輛框底部中心經 IPM 轉為世界座標，依時間差計算 km/h，再做 rolling median、time-aware EMA、視窗 p95、可靠度與超速等級判定。輸出 `overspeed_features.csv` 與 `overspeed_sidecar.csv`。IPM 與影片必須對應同一相機視角。
+
+### 2.2 建立闖紅燈語意
+
+```bash
+traffic-risk build-redlight \
+  outputs/intersection-a/upstream/timestamps/intersection-a.csv \
+  outputs/intersection-a/upstream/reference_windows.csv \
+  outputs/intersection-a/upstream/redlight \
+  --stop-lines configs/stop_lines.json
+```
+
+此分支對齊每幀號誌狀態與車輛軌跡，檢查停止線跨越、跨線時是否紅燈，以及跨線後是否持續前進。輸出 `redlight_features.csv` 與 `redlight_sidecar.csv`。停止線設定必須對應影片的相機視角。
 
 ## 3. 完整風險推論
 
