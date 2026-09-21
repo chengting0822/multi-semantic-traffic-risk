@@ -22,6 +22,8 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
+from traffic_risk.identifiers import normalize_window_keys
+
 
 GROUP_COLUMNS = ["split", "case_key", "video_id", "track_id"]
 TIME_COLUMN = "ts_window_idx"
@@ -45,14 +47,7 @@ def num(frame: pd.DataFrame, col: str, default: float = 0.0) -> pd.Series:
 
 
 def normalize_keys(frame: pd.DataFrame) -> pd.DataFrame:
-    out = frame.copy()
-    for col in ["split", "case_key"]:
-        if col in out.columns:
-            out[col] = out[col].astype(str).str.strip()
-    for col in ["video_id", "track_id", TIME_COLUMN]:
-        if col in out.columns:
-            out[col] = pd.to_numeric(out[col], errors="coerce").fillna(-1).astype(int)
-    return out
+    return normalize_window_keys(frame)
 
 def apply_clean_v38_policy_cap(
     frame: pd.DataFrame,

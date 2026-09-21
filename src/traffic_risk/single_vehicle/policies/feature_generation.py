@@ -20,6 +20,8 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
+from traffic_risk.identifiers import normalize_window_keys
+
 
 KEY_COLUMNS = ["case_key", "video_id", "track_id", "ts_window_idx"]
 
@@ -86,13 +88,7 @@ def clip01(series: pd.Series) -> pd.Series:
 
 
 def normalize_keys(frame: pd.DataFrame) -> pd.DataFrame:
-    out = frame.copy()
-    if "case_key" in out.columns:
-        out["case_key"] = out["case_key"].astype(str).str.strip()
-    for column in ["video_id", "track_id", "ts_window_idx"]:
-        if column in out.columns:
-            out[column] = pd.to_numeric(out[column], errors="coerce").fillna(-1).astype(int)
-    return out
+    return normalize_window_keys(frame)
 
 
 def add_clean_r46_policy_flags(source_frame: pd.DataFrame) -> pd.DataFrame:

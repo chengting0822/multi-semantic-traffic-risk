@@ -107,6 +107,18 @@ YOLO 權重與 TensorRT engine 因體積及環境差異不納入 repository；�
 
 ## 完整風險流程與時間標註
 
+四支 Release 影片是對外展示與回歸驗證資料，**不是程式的影片白名單**。核心流程接受任意影片路徑與文字影片 ID。
+
+追蹤 CSV 可先用串流方式建立時間欄與每車時間視窗；即使是大型 CSV，也不會整份載入記憶體：
+
+```bash
+traffic-risk prepare-tracks \
+  outputs/my-video/tracks.csv \
+  /path/to/my-video.mp4 \
+  outputs/my-video/upstream \
+  --video-id intersection-a
+```
+
 整理版已將正式的 16 維單一車輛模型、完整語意政策鏈、最多 16 台車的場景聚合、59 維場景模型及 Hybrid 融合接成同一個命令：
 
 ```bash
@@ -118,14 +130,23 @@ traffic-risk run-risk \
   --device auto
 ```
 
-輸出包含可稽核的中間特徵、`single_vehicle/single_vehicle_risk.csv`、`scene/scene_risk.csv` 與最終 `traffic_risk.csv`。目前 `run-risk` 的公開邊界從「上游語意時間窗」開始；原始影片的 YOLO/ByteTrack 可在同一 repository 執行，而將追蹤 CSV 轉成 C4O 與軌跡語意表的舊研究腳本仍在進行去歷史依賴整理，未用假資料或簡化規則冒充正式結果。詳見 [執行流程](docs/pipeline.md)。
+輸出包含可稽核的中間特徵、`single_vehicle/single_vehicle_risk.csv`、`scene/scene_risk.csv` 與最終 `traffic_risk.csv`。目前已獨立出「追蹤 CSV → 時間資料→每車視窗」；`run-risk` 仍從 C4O 與軌跡語意表開始。中間的三種語意計算正在去除舊專案絕對路徑與歷史實驗依賴，在尚未完成等價驗證前，不用簡化規則冒充正式結果。詳見 [執行流程](docs/pipeline.md)。
 
-四案例限定的時間標註工具可直接讀取影片與追蹤框：
+時間標註工具可直接讀取影片與追蹤框。Demo ID 會自動套用內建路徑：
 
 ```bash
 traffic-risk annotate 14 --tracks outputs/14/tracks.csv
 # 相容舊名稱的入口
 python scripts/tcn_annotation_gui.py 14 --tracks outputs/14/tracks.csv
+```
+
+任意影片則指定路徑：
+
+```bash
+traffic-risk annotate intersection-a \
+  --video /path/to/intersection-a.mp4 \
+  --tracks outputs/intersection-a/tracks.csv \
+  --output annotations/intersection-a.json
 ```
 
 可標註整體場景或指定車輛的風險區間，輸出格式與原本 `tcn_annotation_gui.py` 相容；介面程式已獨立整理，不依賴原始大型專案的絕對路徑。
@@ -170,13 +191,13 @@ python scripts/tcn_annotation_gui.py 14 --tracks outputs/14/tracks.csv
 ```text
 configs/                  道路幾何、追蹤器與凍結門檻
 models/                   正式 checkpoint 與 SHA-256 manifest
-src/traffic_risk/         偵測、單一車輛風險與場景風險核心
-annotations/              四案例時間標註輸出（不含大型資料集）
+src/traffic_risk/         偵測、上游轉換、單一車輛與場景風險核心
+annotations/              Demo 時間標註範例（工具可用於任意影片）
 examples/demo/            四個真實案例的小型可執行資料
 assets/                   架構圖、方法圖、縮圖與獲獎證明
 docs/                     研究與工程文件
 scripts/                  Demo、偵測 preset 與等價驗證
-tests/                    資產、設定與四案例推論測試
+tests/                    通用資料契約、資產與四案例回歸測試
 ```
 
 訓練影片、逐幀軌跡、人工標註、快取與大型中間輸出不納入 GitHub，原因包含容量、影像授權與隱私風險。Repository 提供資料契約、小型真實範例、正式權重與可驗證結果。

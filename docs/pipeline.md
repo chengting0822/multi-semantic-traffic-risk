@@ -8,6 +8,8 @@
 影片
   ↓ YOLO + ByteTrack + 號誌 CNN
 逐幀追蹤 CSV
+  ↓ 分批時間轉換 + 每車時間視窗
+時間追蹤表 + reference windows
 
 C4O 上游時間窗 + 軌跡語意時間窗
   ↓ 車道、紅燈區、軌跡脈絡與尾端特徵重建
@@ -20,7 +22,7 @@ C4O 上游時間窗 + 軌跡語意時間窗
 整體交通風險
 ```
 
-第一段偵測可由 `traffic-risk detect` 執行；後半段由 `traffic-risk run-risk` 執行。研究舊專案中「追蹤 CSV → C4O／軌跡語意時間窗」仍有大量歷史實驗依賴，現階段刻意保留成明確邊界，避免把舊基準版誤稱為論文正式版。
+偵測由 `traffic-risk detect` 執行，時間轉換由 `traffic-risk prepare-tracks` 執行，後半段由 `traffic-risk run-risk` 執行。四支 Demo 只是可重現範例，三個命令的輸入路徑與影片 ID 均可替換。「時間視窗 → C4O／軌跡語意」仍在去除歷史依賴，現階段保留成明確邊界，避免把舊基準版誤稱為論文正式版。
 
 ## 安裝與影片
 
@@ -44,7 +46,19 @@ traffic-risk detect -- \
 
 完整參數見 [偵測與追蹤](detection.md)。
 
-## 2. 完整風險推論
+## 2. 建立時間追蹤表與每車視窗
+
+```bash
+traffic-risk prepare-tracks \
+  outputs/intersection-a/tracks.csv \
+  /path/to/intersection-a.mp4 \
+  outputs/intersection-a/upstream \
+  --video-id intersection-a
+```
+
+輸出 `timestamps/intersection-a.csv` 與 `reference_windows.csv`。讀取預設每批 250,000 列，可用 `--chunksize` 調整；影片 ID 可為 `14` 之類數字，也可為 `intersection-a` 之類文字。
+
+## 3. 完整風險推論
 
 準備下列當次執行產物：
 
@@ -82,7 +96,7 @@ outputs/case14/
     └── scene_risk.csv
 ```
 
-## 3. 時間標註
+## 4. 時間標註
 
 ```bash
 traffic-risk annotate 14 --tracks outputs/14/tracks.csv
@@ -96,7 +110,13 @@ traffic-risk annotate 14 --tracks outputs/14/tracks.csv
 - `0`～`3`：以目前畫面為終點，加入對應風險區間。
 - `Ctrl+S`：儲存。
 
-工具支援「整體場景」與「指定車輛」兩層標註，只允許四個示範案例 `14`、`76`、`96`、`115`。JSON 使用研究原本的 `timestamp_fixed20.compact.v1` 結構。
+工具支援「整體場景」與「指定車輛」兩層標註。`14`、`76`、`96`、`115` 會從 Demo 設定取得預設路徑；其他 ID 傳入 `--video`、可選的 `--tracks` 與 `--output` 即可：
+
+```bash
+traffic-risk annotate intersection-a --video /path/to/intersection-a.mp4
+```
+
+JSON 使用研究原本的 `timestamp_fixed20.compact.v1` 結構。
 
 ## GPU 與 CPU
 

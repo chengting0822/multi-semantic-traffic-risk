@@ -20,6 +20,17 @@ def build_parser() -> argparse.ArgumentParser:
     detect = commands.add_parser("detect", help="Detect and track vehicles in a video")
     detect.add_argument("args", nargs=argparse.REMAINDER)
 
+    prepare = commands.add_parser(
+        "prepare-tracks",
+        help="Stream a detector CSV into timestamped rows and per-track windows",
+    )
+    prepare.add_argument("detector_csv", type=Path)
+    prepare.add_argument("video", type=Path)
+    prepare.add_argument("output_dir", type=Path)
+    prepare.add_argument("--video-id", help="Logical ID; defaults to the video filename stem")
+    prepare.add_argument("--fps", type=float, help="Override FPS instead of reading video metadata")
+    prepare.add_argument("--chunksize", type=int, default=250_000)
+
     single = commands.add_parser("predict-single", help="Run the frozen single-vehicle GRU on a prepared feature CSV")
     single.add_argument("features", type=Path)
     single.add_argument("output", type=Path)
@@ -88,8 +99,11 @@ def build_parser() -> argparse.ArgumentParser:
     scene_pipeline.add_argument("--batch-size", type=int, default=256)
     scene_pipeline.add_argument("--labeled-only", action="store_true")
 
-    annotate = commands.add_parser("annotate", help="Open the four-case temporal risk annotation GUI")
-    annotate.add_argument("case_id", choices=["14", "76", "96", "115"])
+    annotate = commands.add_parser("annotate", help="Open the temporal risk annotation GUI")
+    annotate.add_argument(
+        "video_id",
+        help="Logical video ID; bundled demo IDs provide default paths, other IDs require --video",
+    )
     annotate.add_argument("--video", type=Path)
     annotate.add_argument("--tracks", type=Path)
     annotate.add_argument("--output", type=Path, dest="annotation")
@@ -130,6 +144,27 @@ def main(argv: list[str] | None = None) -> int:
 
         forwarded = args.args[1:] if args.args[:1] == ["--"] else args.args
         return detection_main(forwarded)
+    if args.command == "prepare-tracks":
+        from .upstream.tracking import prepare_tracking_csv
+
+        prepared = prepare_tracking_csv(
+            detector_csv=args.detector_csv,
+            video_path=args.video,
+            output_dir=args.output_dir,
+            video_id=args.video_id,
+            fps=args.fps,
+            chunksize=args.chunksize,
+        )
+        print(json.dumps({
+            "video_id": prepared.video_id,
+            "fps": prepared.fps,
+            "timestamp_csv": str(prepared.timestamp_csv),
+            "reference_windows_csv": str(prepared.reference_windows_csv),
+            "detector_rows": prepared.detector_rows,
+            "track_count": prepared.track_count,
+            "reference_window_count": prepared.reference_window_count,
+        }, ensure_ascii=False, indent=2))
+        return 0
     if args.command == "predict-single":
         from .single_vehicle.inference import SingleVehicleRiskModel
 
@@ -208,7 +243,7 @@ def main(argv: list[str] | None = None) -> int:
         from .annotation.gui import launch_annotation_gui
 
         launch_annotation_gui(
-            args.case_id,
+            args.video_id,
             video=args.video,
             tracks=args.tracks,
             annotation=args.annotation,

@@ -11,6 +11,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from traffic_risk.identifiers import normalize_window_keys
+
 from .policies.base_semantic import COLS as BASE_COLS, apply_clean_base_semantic_policy
 from .policies.early_reverse import COLS as EARLY_REVERSE_COLS, apply_clean_v51_early_reverse_policy
 from .policies.feature_generation import add_clean_v38_feature_generation, overwrite_historical_v38_aliases
@@ -75,14 +77,7 @@ class PolicyInputs:
 
 
 def normalize_keys(frame: pd.DataFrame) -> pd.DataFrame:
-    out = frame.copy()
-    for column in ("split", "case_key"):
-        if column in out.columns:
-            out[column] = out[column].astype(str).str.strip()
-    for column in ("video_id", "track_id", "ts_window_idx"):
-        if column in out.columns:
-            out[column] = pd.to_numeric(out[column], errors="coerce").fillna(-1).astype(int)
-    return out
+    return normalize_window_keys(frame)
 
 
 def merge_sidecar(frame: pd.DataFrame, sidecar: pd.DataFrame) -> pd.DataFrame:

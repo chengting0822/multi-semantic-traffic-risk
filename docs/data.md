@@ -13,6 +13,13 @@ tl_state, tl_prob_green, tl_prob_red
 
 道路 ROI、車道、停止線與 IPM 設定置於 `configs/`。
 
+`traffic-risk prepare-tracks` 以分批方式轉換大型 CSV，產生：
+
+- `timestamps/<video_id>.csv`：在原追蹤列加上 `timestamp_sec`、影片 ID、case key 與 FPS。
+- `reference_windows.csv`：每條軌跡自首幀起建立 0.6667 秒視窗，步距為 0.3333 秒。
+
+`video_id` 為識別標籤，可使用文字，不會強制轉成整數。為了安全建立檔名，不允許包含 `/` 或 `\\`。
+
 ## 2. 單一車輛 GRU 輸入
 
 每列是一個車輛時間窗，必須有：

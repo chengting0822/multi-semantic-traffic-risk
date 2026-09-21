@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from traffic_risk.annotation.gui import load_case
+from traffic_risk.annotation.gui import load_case, safe_filename
 from traffic_risk.annotation.store import AnnotationDocument, Segment
 from traffic_risk.scene.hybrid import refresh_labels_from_scene_windows
 
@@ -28,14 +28,11 @@ def test_segment_rejects_invalid_values() -> None:
         raise AssertionError("invalid segment must fail")
 
 
-def test_annotation_gui_is_limited_to_demo_cases() -> None:
-    assert load_case("115")["video"].endswith("115.mp4")
-    try:
-        load_case("999")
-    except ValueError as error:
-        assert "case must be" in str(error)
-    else:
-        raise AssertionError("non-demo case must fail")
+def test_annotation_gui_demo_defaults_are_optional() -> None:
+    demo = load_case("115")
+    assert demo is not None and demo["video"].endswith("115.mp4")
+    assert load_case("intersection-a") is None
+    assert safe_filename("intersection/a:morning") == "intersection_a_morning"
 
 
 def test_hybrid_allows_unlabeled_live_inference() -> None:

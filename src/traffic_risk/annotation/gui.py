@@ -1,4 +1,4 @@
-"""Compact temporal annotation GUI for the four portfolio demo videos."""
+"""Compact temporal annotation GUI for demo and user-provided videos."""
 
 from __future__ import annotations
 
@@ -18,12 +18,24 @@ RISK_NAMES = {0: "無風險", 1: "輕微", 2: "中風險", 3: "高風險"}
 RISK_COLORS = {0: "#2f9e62", 1: "#e9a23b", 2: "#ef7d32", 3: "#df3b3b"}
 
 
-def load_case(case_id: str, config_path: Path = CONFIG_DIR / "demo_cases.json") -> dict[str, Any]:
+def load_case(case_id: str, config_path: Path = CONFIG_DIR / "demo_cases.json") -> dict[str, Any] | None:
+    """Return optional defaults for a bundled demo case.
+
+    Demo cases are conveniences, not an allow-list.  A caller can use any
+    video ID when explicit paths are supplied to :func:`launch_annotation_gui`.
+    """
+
     payload = json.loads(config_path.read_text(encoding="utf-8"))
-    allowed = {str(value) for value in payload.get("allowed_video_ids", [])}
-    if str(case_id) not in allowed:
-        raise ValueError(f"case must be one of {sorted(allowed)}")
-    return dict(payload["cases"][str(case_id)])
+    case = payload.get("cases", {}).get(str(case_id))
+    return dict(case) if case is not None else None
+
+
+def safe_filename(value: str) -> str:
+    """Create a portable filename without changing the logical video ID."""
+
+    cleaned = "".join(character if character.isalnum() or character in "-_." else "_" for character in value)
+    cleaned = cleaned.strip("._")
+    return cleaned or "video"
 
 
 def resolve_project_path(value: str | Path) -> Path:
@@ -51,7 +63,7 @@ class TemporalAnnotationApp:
         if not video_path.is_file():
             raise FileNotFoundError(
                 f"video not found: {video_path}\n"
-                "Place the four demo videos under data/demo_videos or pass --video."
+                "Download a bundled demo video or pass --video for your own input."
             )
         self.cv2 = cv2
         self.tk = tk
@@ -75,7 +87,7 @@ class TemporalAnnotationApp:
         self.document = AnnotationDocument.load(annotation_path, self.video_id, self.fps)
 
         self.root = tk.Tk()
-        self.root.title(f"Traffic Risk Annotation · Case {self.video_id}")
+        self.root.title(f"Traffic Risk Annotation · {self.video_id}")
         self.root.geometry("1420x900")
         self.root.configure(bg="#101722")
         self.root.protocol("WM_DELETE_WINDOW", self.close)
@@ -113,7 +125,7 @@ class TemporalAnnotationApp:
 
         header = ttk.Frame(self.root, padding=(18, 12))
         header.pack(fill="x")
-        ttk.Label(header, text=f"Case {self.video_id}  {title}", style="Title.TLabel").pack(side="left")
+        ttk.Label(header, text=f"{self.video_id}  {title}", style="Title.TLabel").pack(side="left")
         ttk.Button(header, text="儲存  Ctrl+S", command=self.save).pack(side="right")
 
         body = ttk.Frame(self.root, padding=(16, 0, 16, 12))
@@ -344,23 +356,31 @@ class TemporalAnnotationApp:
 
 
 def launch_annotation_gui(
-    case_id: str,
+    video_id: str,
     *,
     video: Path | None = None,
     tracks: Path | None = None,
     annotation: Path | None = None,
 ) -> None:
-    case = load_case(case_id)
+    case = load_case(video_id) or {}
+    if video is None and "video" not in case:
+        raise ValueError(
+            f"video ID {video_id!r} is not a bundled demo; pass --video /path/to/input.mp4"
+        )
     video_path = video or resolve_project_path(case["video"])
-    tracks_path = tracks or resolve_project_path(case["tracks"])
-    annotation_path = annotation or resolve_project_path(case["annotation"])
+    tracks_path = tracks or (resolve_project_path(case["tracks"]) if case.get("tracks") else None)
+    annotation_path = annotation or (
+        resolve_project_path(case["annotation"])
+        if case.get("annotation")
+        else PROJECT_ROOT / "annotations" / f"{safe_filename(str(video_id))}.json"
+    )
     TemporalAnnotationApp(
-        video_id=str(case_id),
-        title=str(case["title"]),
+        video_id=str(video_id),
+        title=str(case.get("title", Path(video_path).stem)),
         video_path=video_path,
         tracks_path=tracks_path,
         annotation_path=annotation_path,
     ).run()
 
 
-__all__ = ["TemporalAnnotationApp", "launch_annotation_gui", "load_case"]
+__all__ = ["TemporalAnnotationApp", "launch_annotation_gui", "load_case", "safe_filename"]
