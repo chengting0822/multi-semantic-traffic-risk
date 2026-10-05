@@ -6,10 +6,10 @@
 
 | Case | 來源影片 | 主要情境 | YouTube | Release 結果影片 |
 |---:|---:|---|---|---|
-| 1 | 14.mp4 | 停等紅燈後逆向行駛並闖紅燈 | [觀看](https://youtu.be/NUPHokZSsbk) | `case01-wrong-way-red-light-violation.mp4` |
-| 2 | 76.mp4 | 高車流情境下蛇行穿梭 | [觀看](https://youtu.be/SLkpqrQS3C8) | `case02-weaving-dense-traffic.mp4` |
-| 3 | 96.mp4 | 逆向行駛且嚴重超速 | [觀看](https://youtu.be/vVxrHDQVQmU) | `case03-severe-speeding-wrong-way.mp4` |
-| 4 | 115.mp4 | 逆向、超速與闖紅燈的複合違規 | [觀看](https://youtu.be/iLS613jvpMI) | `case04-red-light-wrong-way-combined.mp4` |
+| 1 | 14.mp4 | 停等紅燈後逆向行駛並闖紅燈 | [觀看](https://youtu.be/1Ru3lnquvQg) | `case01-wrong-way-red-light-violation.mp4` |
+| 2 | 76.mp4 | 高車流情境下蛇行穿梭 | [觀看](https://youtu.be/rfI7OGqpWos) | `case02-weaving-dense-traffic.mp4` |
+| 3 | 96.mp4 | 逆向行駛且嚴重超速 | [觀看](https://youtu.be/QFT_Z3-kAdk) | `case03-severe-speeding-wrong-way.mp4` |
+| 4 | 115.mp4 | 逆向、超速與闖紅燈的複合違規 | [觀看](https://youtu.be/pQrlSh7QFvE) | `case04-red-light-wrong-way-combined.mp4` |
 
 原始與結果影片放在 GitHub `demo-v1` Release；檔名、大小與 SHA-256 記錄在 [`examples/demo/cases.json`](../examples/demo/cases.json)。
 
