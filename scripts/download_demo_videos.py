@@ -10,7 +10,7 @@ from pathlib import Path
 
 
 BASE_URL = (
-    "https://github.com/chengting0822/multi-semantic-traffic-risk_Pre-release/"
+    "https://github.com/chengting0822/multi-semantic-traffic-risk/"
     "releases/download/demo-v1"
 )
 FILES = {
