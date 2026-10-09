@@ -1,6 +1,6 @@
 # 模型架構與維度
 
-[回到首頁](../README.md) · [研究方法](methodology.md) · [資料介面](data.md) · [等價驗證](parity.md)
+[回到首頁](../README.md) · [研究方法](methodology.md) · [展示案例](demo.md)
 
 ## 單一車輛風險
 

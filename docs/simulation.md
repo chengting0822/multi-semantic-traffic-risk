@@ -1,6 +1,6 @@
 # 模擬資料：OpenStreetMap → SUMO → CARLA
 
-[回到首頁](../README.md) · [研究方法](methodology.md) · [Demo 指南](demo.md)
+[回到首頁](../README.md) · [研究方法](methodology.md) · [展示案例](demo.md)
 
 模擬環境建置於 **Ubuntu 22.04**。目的是在可重複的條件下取得多車流與高風險行為，並保留道路幾何、號誌與車道語意。
 
@@ -27,12 +27,12 @@ OpenStreetMap            SUMO                         CARLA
 
 完整影片放在 GitHub `simulation-v1` Release，不寫入 Git 歷史：
 
-- [真實道路參考影片](../../../releases/download/simulation-v1/real-road-reference.mp4)
-- [CARLA 模擬影片](../../../releases/download/simulation-v1/carla-road-simulation.mp4)
+- [真實道路參考影片](https://github.com/chengting0822/multi-semantic-traffic-risk/releases/download/simulation-v1/real-road-reference.mp4)
+- [CARLA 模擬影片](https://github.com/chengting0822/multi-semantic-traffic-risk/releases/download/simulation-v1/carla-road-simulation.mp4)
 
 ## 資料使用原則與限制
 
 - 模擬資料可精確控制事件，但不等於真實交通分布。
 - 攝影機、材質、光影與車流模型會造成模擬到真實的領域差異。
 - 高風險樣本由研究人員設計，適合測試特定語意，不用來聲稱事故發生率。
-- 公開 repository 只放示範影片與小型可執行資料，不放完整訓練資料。
+- 目前公開內容包含研究說明、圖片與示範影片，不包含完整訓練資料。
